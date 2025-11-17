@@ -1,2 +1,2 @@
-# lexc
+# LEX-C
 Lightweight Enhanced eXecution Code

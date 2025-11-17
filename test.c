@@ -1,0 +1,369 @@
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+#include "lookupkeywords.h"  // Include the lookupKeywords function
+#include "tokens.h"          // Token definitions
+
+/* Global declarations */
+/* Variables */
+int charClass;
+char lexeme [100];
+int nextChar; /* use int to hold EOF */
+int lexLen;
+int token;
+int nextToken;
+FILE *in_fp;
+int lastTokenReturned = -1;
+
+/* Function declarations */
+void addChar(void);
+void getChar(void);
+void getNonBlank(void);
+int lex(void);
+int lookupKeywords(char *s);
+
+    int main(int argc, char **argv) {
+        const char *filename = "test.lexc";
+        if (argc > 1) filename = argv[1];
+
+        if ((in_fp = fopen(filename, "r")) == NULL) {
+            printf("ERROR - cannot open %s\n", filename);
+            return 1;
+        }
+
+        getChar();
+        do {
+            lex();
+        } while (nextToken != EOF_TOKEN);
+
+        fclose(in_fp);
+        return 0;
+    }
+
+    void readSingleLineComment(void) {
+        /* Read ~~comment~~ until end of line and store in lexeme */
+        addChar();  /* add second ~ */
+        getChar();
+        while (nextChar != '\n' && nextChar != EOF) {
+            addChar();
+            getChar();
+        }
+    }
+
+    void readMultiLineComment(void) {
+        /* Read ~comment~ across lines but display as single line */
+        while (nextChar != EOF) {
+            if (nextChar == '~') {
+                addChar();
+                getChar();
+                return;
+            } else if (nextChar == '\n') {
+                /* Replace newline with space in lexeme */
+                if (lexLen <= 98) {
+                    lexeme[lexLen++] = ' ';
+                    lexeme[lexLen] = '\0';
+                }
+                getChar();
+            } else {
+                addChar();
+                getChar();
+            }
+        }
+        /* EOF reached without closing ~ */
+    }
+
+    int isValidIdentifier(char *id) {
+        /* Check if identifier is valid:
+           - Must not start with underscore
+           - Must not contain consecutive underscores
+        */
+        if (id[0] == '_') {
+            return 0;
+        }
+        for (int i = 0; id[i] != '\0'; i++) {
+            if (id[i] == '_' && id[i+1] == '_') {
+                return 0;
+            }
+        }
+        return 1;
+    }
+
+    int lookupOperators(char ch) {
+        switch (ch) {
+            case '(':
+                nextToken = LEFT_PAREN;
+                break;
+            case ')':
+                nextToken = RIGHT_PAREN;
+                break;
+            case '[':
+                nextToken = LSQBRACKET;
+                break;
+            case ']':
+                nextToken = RSQBRACKET;
+                break;
+            case '{':
+                nextToken = LCBRACE;
+                break;
+            case '}':
+                nextToken = RCBRACE;
+                break;
+            case ';':
+                nextToken = SEMICOLON;
+                break;
+            case ',':
+                nextToken = COMMA;
+                break;
+            case ':':
+                nextToken = COLON;
+                break;
+            case '+':
+                if (nextChar == '+') {
+                    addChar();
+                    getChar();
+                    if (lastTokenReturned == IDENT || lastTokenReturned == DIGIT) {
+                        nextToken = POST_INCREMENT_OP;
+                    } else {
+                        nextToken = PRE_INCREMENT_OP;
+                    }
+                } else if (charClass == DIGIT) {
+                    addChar();
+                    getChar();
+                    nextToken = POS_OP;
+                } else {
+                    nextToken = ADDITION_OP;
+                }
+                break;
+            case '-':
+                if (nextChar == '-') {
+                    addChar();
+                    getChar();
+                    if (lastTokenReturned == IDENT || lastTokenReturned == DIGIT) {
+                        nextToken = POST_DECREMENT_OP;
+                    } else {
+                        nextToken = PRE_DECREMENT_OP;
+                    }
+                } else if (charClass == DIGIT) {
+                    addChar();
+                    getChar();
+                    nextToken = NEG_OP;
+                } else {
+                    nextToken = SUBTRACT_OP;
+                }
+                break;
+            case '*':
+                nextToken = MULTIPLY_OP;
+                break;
+            case '/':
+                if (nextChar == '/') {
+                    addChar();
+                    getChar();
+                    nextToken = FLOORDIV_OP;
+                } else {
+                nextToken = DIVIDE_OP;
+                }
+                break;
+            case '%':
+                nextToken = MODULO_OP;
+                break;
+            case '^':
+                nextToken = EXPONENT_OP;
+                break;
+            case '=':
+                if (nextChar == '=') {
+                    addChar();
+                    getChar();
+                    nextToken = EQUALITY_OP;
+                } else {
+                    nextToken = ASSIGN_OP;
+                }
+                break;
+            case '!':
+                if (nextChar == '=') {
+                    addChar();
+                    getChar();
+                    nextToken = INEQUALITY_OP;
+                } else {
+                    nextToken = NOT_OP;
+                }
+                break;
+            case '<':
+                if (nextChar == '=') {
+                    addChar();
+                    getChar(); 
+                    nextToken = LESS_EQUAL_OP;
+                } else {
+                    nextToken = LESS_THAN_OP;
+                }
+                break;
+            case '>':
+                if (nextChar == '=') {
+                    addChar();
+                    getChar();
+                    nextToken = GREATER_EQUAL_OP;
+                } else {
+                    nextToken = GREATER_THAN_OP;
+                }
+                break;
+            default:
+                nextToken = UNKNOWN_TOKEN;
+                break;
+        }
+        return nextToken;
+    }
+
+    void addChar(void) {
+        if (lexLen <= 98) {
+            lexeme[lexLen++] = (char)nextChar;
+            lexeme[lexLen] = '\0';
+        } else {
+            printf("ERROR - lexeme is too long\n");
+            lexLen = 0;
+            lexeme[0] = '\0';
+        }
+    }
+
+    void getChar(void) {
+        if (in_fp == NULL) {
+            nextChar = EOF;
+            charClass = EOF;
+            return;
+        }
+
+        int c = getc(in_fp);
+        if (c == EOF) {
+            nextChar = EOF;
+            charClass = EOF;
+            return;
+        }
+
+        nextChar = c;
+        if (isalpha((unsigned char)c)) {
+            charClass = LETTER;
+        } else if (isdigit((unsigned char)c)) {
+            charClass = DIGIT;
+        } else {
+            charClass = UNKNOWN;
+        }
+    }
+
+    void getNonBlank(void) {
+        while (nextChar != EOF && isspace((unsigned char)nextChar)) {
+            getChar();
+        }
+    }
+
+
+    int lex() {
+        lexLen = 0;
+
+        /* Check if already at EOF */
+        if (charClass == EOF) {
+            nextToken = EOF_TOKEN;
+            return nextToken;
+        }
+
+        getNonBlank();
+
+        /* Check EOF after skipping whitespace */
+        if (charClass == EOF) {
+            nextToken = EOF_TOKEN;
+            return nextToken;
+        }
+
+        switch (charClass) {
+            case LETTER:
+                addChar();
+                getChar();
+                while (charClass == LETTER || charClass == DIGIT || (nextChar == '_' && lexeme[lexLen-1] != '_')) {
+                    if (nextChar == '_') {
+                        addChar();
+                        getChar();
+                    } else {
+                        addChar();
+                        getChar();
+                    }
+                }
+                /* Check for invalid identifier format and classify accordingly */
+                if (!isValidIdentifier(lexeme)) {
+                    nextToken = UNKNOWN_TOKEN;
+                } else {
+                    nextToken = lookupKeywords(lexeme);
+                }
+                break;
+            case DIGIT:
+                addChar();
+                getChar();
+                while (charClass == DIGIT) {
+                    addChar();
+                    getChar();
+                } if (nextChar == '.') {
+                    addChar();
+                    getChar();
+                    while (charClass == DIGIT) {
+                        addChar();
+                        getChar();
+                    }
+                    nextToken = DEC_LIT;
+                } else {
+                    nextToken = NUM_LIT;
+                }
+                break;
+            case UNKNOWN:
+                char start_char = nextChar;
+                addChar();
+                getChar();
+
+                if(start_char == '~') {
+                    if (nextChar == '~') {
+                        readSingleLineComment();
+                        nextToken = SINGLE_LINE_COMMENT;
+                    } else {
+                        readMultiLineComment();
+                        nextToken = MULTILINE_COMMENT;
+                    }
+                } else if (start_char == '"') {
+                    while (nextChar != EOF && nextChar != '\"') {
+                        addChar();
+                        getChar();
+                    }
+                    if (nextChar == '\"') {
+                        addChar();
+                        getChar();
+                    } else {
+                        printf("ERROR - unclosed string literal\n");
+                    }
+                    nextToken = TEX_LIT;
+                } else if (start_char == '\'') {
+                    while (nextChar != EOF && nextChar != '\'') {
+                        addChar();
+                        getChar();
+                    } if (nextChar == '\'') {
+                        addChar();
+                        getChar();
+                    } else {
+                        printf("ERROR - unclosed symbol literal\n");
+                    }
+                    nextToken = SYM_LIT;
+                } else if (charClass == LETTER || charClass == DIGIT || nextChar == '_') {
+                    while (charClass == LETTER || charClass == DIGIT || (nextChar == '_' && lexeme[lexLen-1] != '_')) {
+                        if (nextChar == '_') {
+                            addChar();
+                            getChar();
+                        } else {
+                            addChar();
+                            getChar();
+                        }
+                    }
+                    nextToken = UNKNOWN_TOKEN;
+                } else {
+                    lexLen = 1;
+                    lexeme[1] = '\0';
+                    nextToken = lookupOperators(start_char);
+                }
+                break;
+        }
+        printf("Next token is: %d (%s), the lexeme is %s\n", nextToken, tokenNames(nextToken), lexeme);
+        lastTokenReturned = nextToken;
+        return nextToken;
+    }
