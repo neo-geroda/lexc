@@ -101,8 +101,8 @@
 /* End of File */
 #define EOF_TOKEN 200
 
-char *tokenNames(int token) {
-    switch (token) {
+char *token(int key) {
+    switch (key) {
         case IDENT: return "IDENT";
         case ASSIGN_OP: return "ASSIGN_OP";
         case POS_OP: return "POS_OP";

@@ -10,7 +10,7 @@ int charClass;
 char lexeme [100];
 int nextChar; /* use int to hold EOF */
 int lexLen;
-int token;
+char current_token[100];
 int nextToken;
 FILE *in_fp;
 int lastTokenReturned = -1;
@@ -30,6 +30,10 @@ int lookupKeywords(char *s);
             printf("ERROR - cannot open %s\n", filename);
             return 1;
         }
+
+        printf("--------------------------------------------------------------\n");
+        printf("|Token Key\t|Token Name\t\t|Lexeme\t\n");
+        printf("--------------------------------------------------------------\n");
 
         getChar();
         do {
@@ -363,7 +367,14 @@ int lookupKeywords(char *s);
                 }
                 break;
         }
-        printf("Next token is: %d (%s), the lexeme is %s\n", nextToken, tokenNames(nextToken), lexeme);
+        // if(sizeof(token(nextToken)) <= 8){
+        //     printf("|%d\t\t|%s\t\t|%s\t\n", nextToken, token(nextToken), lexeme);
+        // } else if (sizeof(token(nextToken)) <= 16){
+        //     printf("|%d\t\t|%s\t|%s\t\n", nextToken, token(nextToken), lexeme);
+        // } else {
+        //     printf("|%d\t\t|%s\t|%s\t\n", nextToken, token(nextToken), lexeme);
+        // }
+        printf("|%-15d|%-23s|%s\n", nextToken, token(nextToken), lexeme);
         lastTokenReturned = nextToken;
         return nextToken;
     }
