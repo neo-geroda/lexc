@@ -8,7 +8,7 @@
 /* Variables */
 int charClass;
 char lexeme [100];
-int nextChar; /* use int to hold EOF */
+int nextChar;
 int lexLen;
 char current_token[100];
 int nextToken;
@@ -45,8 +45,7 @@ int lookupKeywords(char *s);
     }
 
     void readSingleLineComment(void) {
-        /* Read ~~comment~~ until end of line and store in lexeme */
-        addChar();  /* add second ~ */
+        addChar(); 
         getChar();
         while (nextChar != '\n' && nextChar != EOF) {
             addChar();
@@ -55,14 +54,12 @@ int lookupKeywords(char *s);
     }
 
     void readMultiLineComment(void) {
-        /* Read ~comment~ across lines but display as single line */
         while (nextChar != EOF) {
             if (nextChar == '~') {
                 addChar();
                 getChar();
                 return;
             } else if (nextChar == '\n') {
-                /* Replace newline with space in lexeme */
                 if (lexLen <= 98) {
                     lexeme[lexLen++] = ' ';
                     lexeme[lexLen] = '\0';
@@ -73,14 +70,9 @@ int lookupKeywords(char *s);
                 getChar();
             }
         }
-        /* EOF reached without closing ~ */
     }
 
     int isValidIdentifier(char *id) {
-        /* Check if identifier is valid:
-           - Must not start with underscore
-           - Must not contain consecutive underscores
-        */
         if (id[0] == '_') {
             return 0;
         }

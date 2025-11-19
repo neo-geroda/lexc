@@ -24,6 +24,7 @@ char yych;
             case 't': goto Q101;
             case 'l': goto Q105;
             case 'v': goto Q132;
+            default: goto Q200;
         }
 
         Q12:
