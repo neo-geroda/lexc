@@ -101,14 +101,8 @@
 /* End of File */
 #define EOF_TOKEN 200
 
-typedef struct {
-    int key;
-    const char *token;
-} TokenEntry;
+#include "token_list.h"
 
-extern const TokenEntry token_table[];
-extern const int token_table_size;
-
-const char *token(int key);
+#define token(key) token_name(key)
 
 #endif /* TOKENS_H */

@@ -5,6 +5,7 @@
 #include "../include/tokens.h"          // Token definitions
 #include "../include/symbol_table.h"    // Symbol table functions
 #include "../include/lexer.h"          // Lexer function declarations
+#include "../include/token_stream.h"    // Token stream wrapper
 
 /* Global declarations */
 /* Variables */
@@ -17,6 +18,7 @@ int nextToken;
 FILE *in_fp;
 int lastTokenReturned = -1;
 int lineNumber = 1;
+int tokenLineNumber = 1;  /* Line number where current token starts */
 
 /* Function declarations */
 void addChar(void);
@@ -35,23 +37,28 @@ int lookupKeywords(char *s);
             return 1;
         }
 
-        if ((in_fp = fopen(filename, "r")) == NULL) {
+        FILE *fp = fopen(filename, "r");
+        if (fp == NULL) {
             printf("ERROR - cannot open %s\n", filename);
             return 1;
         }
 
         printf("------------------------------------------------------------------------------\n");
-        printf("|Token Key\t|Token Name\t\t|Lexeme\t\n");
+        printf("|Line\t|Token Key\t|Token Name\t\t|Lexeme\t\n");
         printf("------------------------------------------------------------------------------\n");
 
-        getChar();
+        init_lexer_stream(fp);
+
+        Token t;
         do {
-            lex();
-        } while (nextToken != EOF_TOKEN);
+            t = next_token();
+            printf("|%-5d\t|%-15d|%-23s|%s\n", t.line, t.type, t.name, t.lexeme);
+        } while (t.type != EOF_TOKEN);
 
-        printSymbolTable();  
+        printSymbolTable();
 
-        fclose(in_fp);
+        close_lexer_stream();
+        fclose(fp);
         return 0;
     }
 
@@ -281,6 +288,9 @@ int lookupKeywords(char *s);
             return nextToken;
         }
 
+        /* Capture line number at start of token (after whitespace skipped) */
+        tokenLineNumber = lineNumber;
+
         switch (charClass) {
             case LETTER:
                 addChar();
@@ -300,7 +310,7 @@ int lookupKeywords(char *s);
                 } else {
                     nextToken = lookupKeywords(lexeme);
                     if(nextToken == IDENT) {
-                        addSymbol(lexeme, CAT_VAR, TYPE_NONE, 0, lineNumber);
+                        addSymbol(lexeme, CAT_VAR, TYPE_NONE, 0, tokenLineNumber);
                     }
                 }
                 break;
@@ -377,7 +387,11 @@ int lookupKeywords(char *s);
                 break;
         }
 
-        printf("|%-15d|%-23s|%s\n", nextToken, token(nextToken), lexeme);
         lastTokenReturned = nextToken;
         return nextToken;
     }
+
+void lexer_set_input(FILE *in) {
+    in_fp = in;
+    getChar();
+}
