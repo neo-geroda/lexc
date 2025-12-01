@@ -1,5 +1,5 @@
 number k;
 k = 10;
-display(k);
-k = get(number);
-display(k);
+display( k );
+k = get( number );
+display( k );

@@ -1,16 +1,15 @@
-// This will go all the grammar functions
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include "../include/lookupkeywords.h"  // Include the lookupKeywords function
-#include "../include/tokens.h"          // Token definitions
-#include "../include/symbol_table.h"    // Symbol table functions
-#include "../include/lexer.h"          // Lexer function declarations
-#include "../include/token_stream.h"    // Token stream wrapper
+#include "../include/lookupkeywords.h"
+#include "../include/tokens.h"
+#include "../include/symbol_table.h"
+#include "../include/lexer.h"
+#include "../include/token_stream.h"
 
-// Declare the grammar
+// Grammar function declarations
 void parseProgram();
-void parseStatementList(); // this needs to handle 'end' '}'
+void parseStatementList();
 void parseStatement();
 void parseInputStatement();
 void parseDataType();
@@ -21,74 +20,68 @@ void parseAssStatement();
 void parseDecStatement();
 void parseDecSuffix();
 
-// helper function
+// Helper function
 void match(int);
 
-// Have the first token to check
-Token current_token_parse;
+// Current token index
+size_t parse_index = 0;
 
-void parse(){
-    // current_token = next_token();
+// Macro to get current token
+#define current_token_parse tokens[parse_index]
 
-    // while(current_token.type != EOF_TOKEN){
-    //     parseProgram();
-    // }
-
-    current_token_parse = next_token();
+// Parser entry point
+void parse() {
+    parse_index = 0; // start at first token
     parseProgram();
-    match(EOF_TOKEN);
-
+    match(EOF_TOKEN); // ensure we end on EOF
 }
 
-// Define the matching function; this consumes the expected lexeme/token
+// Match function consumes the expected token
 void match(int expected){
     if (current_token_parse.type == expected){
-        printf("Consumed: %s", current_token_parse.name);
-        current_token_parse = next_token();
+        printf("Consumed: %s\n", current_token_parse.name);
+        parse_index++; // move to next token
     }
     else{
-        printf("There is a problem with parsing...");
+        printf("Syntax error: expected token %d but found %s\n",
+               expected, current_token_parse.name);
+        parse_index++; //advance to prevent infinite loop
     }
 }
 
-void parseProgram(){
+// ----- Grammar functions -----
+
+void parseProgram() {
     parseStatementList();
 }
 
 void parseStatementList() {
-    parseStatement();
-    match(SEMICOLON);   // always required
-
-    while (current_token_parse.type != EOF_TOKEN &&
+    while (parse_index < count &&
+           current_token_parse.type != EOF_TOKEN &&
            current_token_parse.type != RCBRACE) {
         parseStatement();
-        match(SEMICOLON);
+        // no match(SEMICOLON) here — statements handle their own
     }
 }
 
-void parseStatement(){
-    switch(current_token_parse.type){
 
-        // I think this shows state diagram
+void parseStatement() {
+    switch (current_token_parse.type) {
         case GET: parseInputStatement(); break;
         case DISPLAY: parseOutputStatement(); break;
         case IDENT: parseAssStatement(); break;
-        case NUMBER: parseDecStatement(); break;
-        case DECIMAL: parseDecStatement(); break;
-        case TEXT: parseDecStatement(); break;
-        case BOOL: parseDecStatement(); break;
-        case SYMBOL: parseDecStatement(); break;
+        case NUMBER:
+        case DECIMAL:
+        case TEXT:
+        case BOOL:
+        case SYMBOL:
         case LIST: parseDecStatement(); break;
-
         default:
-            printf("Error with parsing a statement.");
-        }
+            printf("Syntax error: unexpected token %s\n", current_token_parse.name);
+    }
 }
 
-void parseInputStatement(){
-
-    // handle datatype here
-
+void parseInputStatement() {
     match(GET);
     match(LEFT_PAREN);
     parseDataType();
@@ -96,9 +89,9 @@ void parseInputStatement(){
     match(SEMICOLON);
 }
 
-void parseDataType(){
-    switch(current_token_parse.type){
-        case NUMBER: 
+void parseDataType() {
+    switch (current_token_parse.type) {
+        case NUMBER:
         case DECIMAL:
         case BOOL:
         case SYMBOL:
@@ -106,13 +99,12 @@ void parseDataType(){
         case LIST:
             match(current_token_parse.type);
             break;
-
         default:
-            printf("Expected a data type (number, decimal, text, bool, symbol)");
+            printf("Syntax error: expected a data type, found %s\n", current_token_parse.name);
     }
 }
 
-void parseOutputStatement(){
+void parseOutputStatement() {
     match(DISPLAY);
     match(LEFT_PAREN);
     parseExpr();
@@ -120,16 +112,16 @@ void parseOutputStatement(){
     match(SEMICOLON);
 }
 
-void parseExpr(){
-    if (current_token_parse.type == IDENT){
-        match(current_token_parse.type);
+void parseExpr() {
+    if (current_token_parse.type == IDENT) {
+        match(IDENT);
         return;
     }
     parseLit();
 }
 
-void parseLit(){
-    switch(current_token_parse.type){
+void parseLit() {
+    switch (current_token_parse.type) {
         case NUM_LIT:
         case DEC_LIT:
         case SYM_LIT:
@@ -137,41 +129,37 @@ void parseLit(){
         case FALSE:
             match(current_token_parse.type);
             break;
-        
         default:
-            printf("Found error in literals");
+            printf("Syntax error: expected literal, found %s\n", current_token_parse.name);
     }
 }
 
-void parseAssStatement(){
+void parseAssStatement() {
     match(IDENT);
-    match(EQUALITY_OP);
+    match(ASSIGN_OP);
 
-    // decide which branch based on next token
     if (current_token_parse.type == GET) {
         parseInputStatement(); // id = get(<DATA_TYPE>);
     } else {
         parseExpr();           // id = <EXPR>;
-        match(SEMICOLON);      // don't forget semicolon for expressions
+        match(SEMICOLON);
     }
 }
 
-void parseDecStatement(){
+void parseDecStatement() {
     parseDataType();
     match(IDENT);
     parseDecSuffix();
 }
 
-void parseDecSuffix(){
+void parseDecSuffix() {
     if (current_token_parse.type == SEMICOLON) {
         match(SEMICOLON);
-    }
-    else if (current_token_parse.type == EQUALITY_OP) {
-        match(EQUALITY_OP);
+    } else if (current_token_parse.type == ASSIGN_OP) {
+        match(ASSIGN_OP);
         parseExpr();
         match(SEMICOLON);
-    }
-    else {
-        printf("Syntax error in declaration\n");
+    } else {
+        printf("Syntax error in declaration at token %s\n", current_token_parse.name);
     }
 }

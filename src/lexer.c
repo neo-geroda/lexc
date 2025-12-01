@@ -6,6 +6,7 @@
 #include "../include/symbol_table.h"    // Symbol table functions
 #include "../include/lexer.h"          // Lexer function declarations
 #include "../include/token_stream.h"    // Token stream wrapper
+#include <stdlib.h>
 
 /* Global declarations */
 /* Variables */
@@ -27,7 +28,11 @@ void getNonBlank(void);
 int lex(void);
 int lookupKeywords(char *s);
 
-    int runLexerTest(int argc, char **argv) {
+Token *tokens = NULL;      // dynamic array
+size_t count = 0;          // how many items we have
+size_t capacity = 0;       // current allocated size
+
+   int runLexerTest(int argc, char **argv) { 
         const char *filename = "test.lexc";
         if (argc > 1) filename = argv[1];
 
@@ -52,7 +57,24 @@ int lookupKeywords(char *s);
         Token t;
         do {
             t = next_token();
+
+            // Skip single-line and multi-line comments
+            if (t.type != SINGLE_LINE_COMMENT && t.type != MULTILINE_COMMENT) {
+                if (count == capacity) {
+                    capacity = capacity == 0 ? 4 : capacity * 2;
+                    tokens = realloc(tokens, capacity * sizeof(Token));
+                    if (!tokens) {
+                        fprintf(stderr, "Memory allocation failed\n");
+                        exit(1);
+                    }
+                }
+
+                tokens[count++] = t; 
+                // printf("Appended successfully!\n");
+            }
+
             printf("|%-5d\t|%-15d|%-23s|%s\n", t.line, t.type, t.name, t.lexeme);
+
         } while (t.type != EOF_TOKEN);
 
         printSymbolTable();
@@ -61,6 +83,7 @@ int lookupKeywords(char *s);
         fclose(fp);
         return 0;
     }
+
 
     void readSingleLineComment(void) {
         addChar(); 
