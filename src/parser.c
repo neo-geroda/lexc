@@ -20,6 +20,9 @@ void parseAssStatement();
 void parseDecStatement();
 void parseDecSuffix();
 
+// Recovery function
+void panicRecovery();
+
 // Helper function
 void match(int);
 
@@ -37,19 +40,36 @@ void parse() {
 }
 
 // Match function consumes the expected token
-void match(int expected){
-    if (current_token_parse.type == expected){
+void match(int expected) {
+    if (current_token_parse.type == expected) {
         printf("Consumed: %s\n", current_token_parse.name);
         parse_index++; // move to next token
-    }
-    else{
+    } else {
         printf("Syntax error: expected token %d but found %s\n",
                expected, current_token_parse.name);
-
-        // This needs edition
-        parse_index++; //advance to prevent infinite loop
+        panicRecovery();  // jump over unexpected tokens
     }
 }
+
+
+void panicRecovery() {
+    printf("Entering panic recovery...\n");
+
+    while (parse_index < count &&
+           current_token_parse.type != SEMICOLON &&
+           current_token_parse.type != RCBRACE &&
+           current_token_parse.type != EOF_TOKEN)
+    {
+        printf("Skipping token: %s\n", current_token_parse.name);
+        parse_index++;
+    }
+
+    if (current_token_parse.type == SEMICOLON) {
+        printf("Recovered at ;\n");
+        parse_index++;
+    }
+}
+
 
 // ----- Grammar functions -----
 
@@ -78,14 +98,17 @@ void parseStatement() {
         case BOOL:
         case SYMBOL:
         case LIST: parseDecStatement(); break;
+
         default:
             printf("Syntax error: unexpected token %s\n", current_token_parse.name);
-    }
+            panicRecovery();
+            break;
+        }
 }
 
 void parseInputStatement() {
     match(GET);
-    match(LEFT_PAREN);
+    match(LEFT_PAREN); // after this fell, we traversed yet we still use the parsers below
     parseDataType();
     match(RIGHT_PAREN);
     match(SEMICOLON);
@@ -103,6 +126,7 @@ void parseDataType() {
             break;
         default:
             printf("Syntax error: expected a data type, found %s\n", current_token_parse.name);
+            return;
     }
 }
 
@@ -141,9 +165,9 @@ void parseAssStatement() {
     match(ASSIGN_OP);
 
     if (current_token_parse.type == GET) {
-        parseInputStatement(); // id = get(<DATA_TYPE>);
+        parseInputStatement();
     } else {
-        parseExpr();           // id = <EXPR>;
+        parseExpr();           
         match(SEMICOLON);
     }
 }

@@ -3,8 +3,8 @@ Lightweight Enhanced eXecution Code
 
 ## How to Run
 
-1. Open the folder in terminal
+1. Open the folder in terminal `../lexc`
 
-2. Compile the file by typing C:/msys64/ucrt64/bin/gcc.exe -fdiagnostics-color=always -g src/*.c -Iinclude -o lexc.exe
+2. Compile the file by typing `gcc src/main.c src/parser.c src/lexer.c src/token_stream.c src/token_list.c src/symbol_table.c src/lookupkeywords.c -I include -g -Wall -o compiler.exe`
 
-3. Run by typing .\lexc.exe tests\test.lexc
+3. Run by typing `.\compiler.exe tests/sample_program.txt`
