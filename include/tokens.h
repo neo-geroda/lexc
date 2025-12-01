@@ -61,13 +61,14 @@
 #define VOID 115
 #define IN 116
 #define ONFAIL 117
+// this has no end
 
 /* Data Types */
 #define NUMBER 120
 #define DECIMAL 121
 #define SYMBOL 122
 #define BOOL 123
-#define STRING 124
+#define STRING 124 // This is a text already
 #define LIST 125
 #define TEXT 126
 
