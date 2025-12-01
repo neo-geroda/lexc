@@ -7,50 +7,51 @@
 #include "../include/lexer.h"
 #include "../include/token_stream.h"
 
-// Grammar function declarations
+// ---- Forward declarations ----
 void parseProgram();
 void parseStatementList();
 void parseStatement();
 void parseInputStatement();
-void parseDataType();
+int  parseDataType();
 void parseOutputStatement();
 void parseExpr();
 void parseLit();
 void parseAssStatement();
 void parseDecStatement();
 void parseDecSuffix();
-
-// Recovery function
 void panicRecovery();
 
-// Helper function
-void match(int);
+// match returns 1 (success) or 0 (failed)
+int match(int expected);
 
-// Current token index
+// Parse index
 size_t parse_index = 0;
 
-// Macro to get current token
 #define current_token_parse tokens[parse_index]
 
-// Parser entry point
+// --------- PARSE ENTRY POINT ---------
+
 void parse() {
-    parse_index = 0; // start at first token
+    parse_index = 0;
     parseProgram();
-    match(EOF_TOKEN); // ensure we end on EOF
+    match(EOF_TOKEN);
 }
 
-// Match function consumes the expected token
-void match(int expected) {
+// --------- MATCH & RECOVERY ---------
+
+int match(int expected) {
     if (current_token_parse.type == expected) {
         printf("Consumed: %s\n", current_token_parse.name);
-        parse_index++; // move to next token
-    } else {
-        printf("Syntax error: expected token %d but found %s\n",
-               expected, current_token_parse.name);
-        panicRecovery();  // jump over unexpected tokens
+        parse_index++;
+        return 1;
     }
-}
 
+    printf("Syntax error: expected token %d but found %s\n",
+           expected, current_token_parse.name);
+
+    panicRecovery();
+    return 0;
+}
 
 void panicRecovery() {
     printf("Entering panic recovery...\n");
@@ -70,8 +71,7 @@ void panicRecovery() {
     }
 }
 
-
-// ----- Grammar functions -----
+// --------- GRAMMAR ---------
 
 void parseProgram() {
     parseStatementList();
@@ -80,41 +80,59 @@ void parseProgram() {
 void parseStatementList() {
     while (parse_index < count &&
            current_token_parse.type != EOF_TOKEN &&
-           current_token_parse.type != RCBRACE) {
+           current_token_parse.type != RCBRACE)
+    {
         parseStatement();
-        // no match(SEMICOLON) here — statements handle their own
     }
 }
 
-
 void parseStatement() {
     switch (current_token_parse.type) {
-        case GET: parseInputStatement(); break;
-        case DISPLAY: parseOutputStatement(); break;
-        case IDENT: parseAssStatement(); break;
+
+        case GET:
+            parseInputStatement();
+            break;
+
+        case DISPLAY:
+            parseOutputStatement();
+            break;
+
+        case IDENT:
+            parseAssStatement();
+            break;
+
         case NUMBER:
         case DECIMAL:
         case TEXT:
         case BOOL:
         case SYMBOL:
-        case LIST: parseDecStatement(); break;
+        case LIST:
+            parseDecStatement();
+            break;
 
         default:
-            printf("Syntax error: unexpected token %s\n", current_token_parse.name);
+            printf("Syntax error: unexpected token %s\n",
+                   current_token_parse.name);
             panicRecovery();
             break;
-        }
+    }
 }
+
+// --------- INPUT STATEMENT ---------
 
 void parseInputStatement() {
-    match(GET);
-    match(LEFT_PAREN); // after this fell, we traversed yet we still use the parsers below
-    parseDataType();
-    match(RIGHT_PAREN);
-    match(SEMICOLON);
+    if (!match(GET)) return;
+    if (!match(LEFT_PAREN)) return;
+
+    if (!parseDataType()) return;
+
+    if (!match(RIGHT_PAREN)) return;
+    if (!match(SEMICOLON)) return;
 }
 
-void parseDataType() {
+// --------- DATATYPE ---------
+
+int parseDataType() {
     switch (current_token_parse.type) {
         case NUMBER:
         case DECIMAL:
@@ -123,20 +141,28 @@ void parseDataType() {
         case TEXT:
         case LIST:
             match(current_token_parse.type);
-            break;
+            return 1;
+
         default:
-            printf("Syntax error: expected a data type, found %s\n", current_token_parse.name);
-            return;
+            printf("Syntax error: expected a data type, found %s\n",
+                   current_token_parse.name);
+            return 0;
     }
 }
 
+// --------- OUTPUT STATEMENT ---------
+
 void parseOutputStatement() {
-    match(DISPLAY);
-    match(LEFT_PAREN);
+    if (!match(DISPLAY)) return;
+    if (!match(LEFT_PAREN)) return;
+
     parseExpr();
-    match(RIGHT_PAREN);
-    match(SEMICOLON);
+
+    if (!match(RIGHT_PAREN)) return;
+    if (!match(SEMICOLON)) return;
 }
+
+// --------- EXPRESSIONS ---------
 
 void parseExpr() {
     if (current_token_parse.type == IDENT) {
@@ -155,37 +181,50 @@ void parseLit() {
         case FALSE:
             match(current_token_parse.type);
             break;
+
         default:
-            printf("Syntax error: expected literal, found %s\n", current_token_parse.name);
+            printf("Syntax error: expected literal, found %s\n",
+                   current_token_parse.name);
+            break;
     }
 }
+
+// --------- ASSIGNMENT ---------
 
 void parseAssStatement() {
-    match(IDENT);
-    match(ASSIGN_OP);
+    if (!match(IDENT)) return;
+    if (!match(ASSIGN_OP)) return;
 
     if (current_token_parse.type == GET) {
-        parseInputStatement();
-    } else {
-        parseExpr();           
-        match(SEMICOLON);
+        parseInputStatement();  // already matched semicolon inside
+        return;
     }
+
+    parseExpr();
+    match(SEMICOLON); // safe, will recover if wrong
 }
 
+// --------- DECLARATION ---------
+
 void parseDecStatement() {
-    parseDataType();
-    match(IDENT);
+    if (!parseDataType()) return;
+    if (!match(IDENT)) return;
+
     parseDecSuffix();
 }
 
 void parseDecSuffix() {
     if (current_token_parse.type == SEMICOLON) {
         match(SEMICOLON);
-    } else if (current_token_parse.type == ASSIGN_OP) {
+    }
+    else if (current_token_parse.type == ASSIGN_OP) {
         match(ASSIGN_OP);
         parseExpr();
         match(SEMICOLON);
-    } else {
-        printf("Syntax error in declaration at token %s\n", current_token_parse.name);
+    }
+    else {
+        printf("Syntax error in declaration at token %s\n",
+               current_token_parse.name);
+        panicRecovery();
     }
 }
