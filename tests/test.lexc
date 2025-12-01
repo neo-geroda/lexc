@@ -1,4 +1,5 @@
 number k;
+y = get( decimal );
 k = 10;
 display( k );
 k = get( number );

@@ -45,6 +45,8 @@ void match(int expected){
     else{
         printf("Syntax error: expected token %d but found %s\n",
                expected, current_token_parse.name);
+
+        // This needs edition
         parse_index++; //advance to prevent infinite loop
     }
 }
