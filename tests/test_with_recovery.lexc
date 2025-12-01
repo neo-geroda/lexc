@@ -1,6 +1,6 @@
 number k;
 y = get decima );
-k = 10;;
+k = 10;
 display( k );
 k = get( number );
 display( k );
