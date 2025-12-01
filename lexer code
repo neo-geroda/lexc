@@ -362,6 +362,7 @@ size_t capacity = 0;       // current allocated size
             case UNKNOWN:
                 char start_char = nextChar;
                 
+                /* Check if start_char is a delimiter - if so, return immediately */
                 if (isDelimiter(start_char)) {
                     addChar();
                     getChar();
