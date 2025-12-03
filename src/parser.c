@@ -399,6 +399,7 @@ void parsePrimary(){
         case SYM_LIT:
         case TRUE:
         case FALSE:
+        case TEX_LIT:
             match(current_token_parse.type);
             break;
 
