@@ -81,7 +81,6 @@ void panicRecovery() {
 
     while (parse_index < count &&
            current_token_parse.type != SEMICOLON &&
-           current_token_parse.type != RCBRACE &&
            current_token_parse.type != EOF_TOKEN)
     {
         printf("Skipping token: %s\n", current_token_parse.name);
