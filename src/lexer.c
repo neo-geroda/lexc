@@ -59,7 +59,7 @@ size_t capacity = 0;       // current allocated size
             t = next_token();
 
             // Skip single-line and multi-line comments
-            if (t.type != SINGLE_LINE_COMMENT && t.type != MULTILINE_COMMENT) {
+            if (t.type != SINGLE_LINE_COMMENT && t.type != MULTILINE_COMMENT && t.type != NOISE_WORD) {
                 if (count == capacity) {
                     capacity = capacity == 0 ? 4 : capacity * 2;
                     tokens = realloc(tokens, capacity * sizeof(Token));

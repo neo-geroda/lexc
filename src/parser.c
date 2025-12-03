@@ -347,7 +347,7 @@ void parseTerm(){
     parsePower();
 
         while(current_token_parse.type == MULTIPLY_OP ||
-        current_token_parse.type == DIVISIOn_OP ||
+        current_token_parse.type == DIVIDE_OP ||
         current_token_parse.type == FLOORDIV_OP ||
         current_token_parse.type == MODULO_OP) {
             match(current_token_parse.type);
