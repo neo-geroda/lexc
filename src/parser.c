@@ -243,7 +243,7 @@ void parseConditionalStmnt(){
     if (!match(RIGHT_PAREN)) return;
     if (!match(LCBRACE)) return;
     parseStatementList();
-    if (!match(LCBRACE)) return;
+    if (!match(RCBRACE)) return;
 
     parseElifList();
     parseElseOpt();
@@ -301,29 +301,142 @@ void parseJumpStmnt(){
 
 // ----- All about Expression -------
 
-void parseExpr() {
-    if (current_token_parse.type == IDENT) {
-        match(IDENT);
-        return;
-    }
-    parseLit();
+// --------------- Updated expressions block
+
+void parseExpr () {
+    parseBoolExpr ();
 }
 
+void parseBoolExpr () {
+    parseRelExpr ();
 
+        while (current_token_parse.type == OR_OP)
+        {
+            match(OR_OP);
+            parseRelExpr();
+        }
+}
 
+void parseRelExpr (){
+    parseAddExpr();
 
+    switch (current_token_parse.type)
+    {
+    case EQUALITY_OP:
+    case INEQUALITY_OP:
+    case GREATER_THAN_OP:
+    case LESS_THAN_OP:
+    case GREATER_EQUAL_OP:
+    case LESS_EQUAL_OP:
+        match(current_token_parse.type);
+        parseAddExpr();
+    break;
+    
+    default:
+        break;
+    }
+}
 
+void parseAddExpr (){
+        parseTerm();
+            
+            while(current_token_parse.type == ADDITION_OP ||
+                    current_token_parse.type == SUBTRACT_OP){
+                        match(current_token_parse.type);
+                        parseTerm();
+                    }
+}
 
+void parseTerm(){
+    parsePower();
 
+        while(current_token_parse.type == MULTIPLY_OP ||
+        current_token_parse.type == DIVISIOn_OP ||
+        current_token_parse.type == FLOORDIV_OP ||
+        current_token_parse.type == MODULO_OP) {
+            match(current_token_parse.type);
+            parsePower();
+        }
+}
 
+void parsePower() {
+    parseUnary();
 
+        while(current_token_parse.type == EXPONENT_OP){
+            match(EXPONENT_OP);
+            parseUnary();
+        }
+}
 
+void parseUnary() {
 
+        while(current_token_parse.type == ADDITION_OP ||
+            current_token_parse.type == SUBTRACT_OP ||
+            current_token_parse.type == PRE_INCREMENT_OP ||
+            current_token_parse.type == PRE_DECREMENT_OP ||
+            current_token_parse.type == NOT_OP){
+                match(current_token_parse.type);
+                parseUnary();
+            }
+            parsePostfix();
+}
 
+void parsePostfix(){
+    parsePrimary();
 
+    while(current_token_parse.type == POST_INCREMENT_OP ||
+        current_token_parse.type == POST_DECREMENT_OP) {
+            match(current_token_parse.type);
+        }
+        
+}
 
+void parsePrimary(){
 
+    switch(current_token_parse.type) {
+        case NUM_LIT:
+        case DEC_LIT:
+        case SYM_LIT:
+        case TRUE:
+        case FALSE:
+            match(current_token_parse.type);
+            break;
 
+            case IDENT:
+                match(IDENT);
+                    if (current_token_parse.type == LEFT_PAREN) {
+                    parseFunctionCallTail();
+                }
+            return;
+
+            case LEFT_PAREN:
+                match(LEFT_PAREN);
+                parseExpr();
+                match(RIGHT_PAREN);
+            return;
+
+            default:
+            printf("Syntax error: expected literal, found %s\n",
+                   current_token_parse.name);
+            panicRecovery();
+            break;
+            } 
+}
+
+void parseFunctionCallTail() {
+    match(LEFT_PAREN);
+
+        if (current_token_parse.type != RIGHT_PAREN) {
+            parseExpr();
+
+                while (current_token_parse.type == COMMA) {
+                    match(COMMA);
+                    parseExpr();
+                }
+        }
+
+    match(RIGHT_PAREN);
+}
 
 
 
