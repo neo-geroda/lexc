@@ -390,7 +390,7 @@ size_t capacity = 0;       // current allocated size
                     } else {
                         printf("ERROR - unclosed string literal\n");
                     }
-                    nextToken = TEX_LIT;
+                    nextToken = TEXT_LIT;
                 } else if (start_char == '\'') {
                     addChar();
                     getChar();

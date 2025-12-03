@@ -1,0 +1,16 @@
+if (x > 5) {
+    display("x is greater than 5");
+}
+elif (x == 5) {
+    display("x is equal to 5");
+}
+else {
+    display("x is less than 5");
+    if("kim"){
+        number kim = get(decimal);
+    };
+}
+
+number x, y, z;
+
+number x = 10, y = 20, t = 11;

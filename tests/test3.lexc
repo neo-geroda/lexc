@@ -2,6 +2,7 @@ number x;
 decimal rate;
 text msg;
 bool flag;
+number y = 7;
 
 x = 10;
 rate = 3.14;
@@ -20,16 +21,16 @@ display(x + rate);
 
 if (x > 5) {
     display("x is greater than 5");
-};
+}
 elif (x == 5) {
     display("x is equal to 5");
-};
+}
 else {
     display("x is less than 5");
     if("kim"){
-        number kim = get(deimal);
+        number kim = get(decimal);
     };
-};
+}
 
 repeat(3) {
     x = x + 1;

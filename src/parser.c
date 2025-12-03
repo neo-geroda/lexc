@@ -20,11 +20,16 @@ void parseIdList();
 void parseIdListTail();
 int parseDataType();
 void parseDecStmnt();
+void parseDecList();
 void parseInputStmnt();
 void parseOutputStmnt();
 void parseAssStmnt();
 void parseConditionalStmnt();
 void parseIterStmnt();
+void parseDecItem();
+void parseDecListTail();
+void parseDecItemSuffix();
+
 // void parseRepeat();
 void parseJumpStmnt();
 void parseDecSuffix();
@@ -102,10 +107,14 @@ void parseProgram() {
 
 void parseStatementList() {
     while (parse_index < count &&
-           current_token_parse.type != EOF_TOKEN)
+           current_token_parse.type != EOF_TOKEN &&
+        current_token_parse.type != RCBRACE)
     {
         parseStatement();
-        if(!match(SEMICOLON)) return;
+
+        if (current_token_parse.type == SEMICOLON) {
+            match(SEMICOLON);
+        }
     }
 }
 
@@ -176,19 +185,46 @@ void parseStatement() {
 
 void parseDecStmnt(){
     parseDataType();
-    parseIdList();
-
+    // parseIdList();
+    parseDecList();
     // if (!match(IDENT)) return;
 
-    parseDecSuffix();
+    // parseDecItemSuffix();
 }
 
-void parseDecSuffix(){
+void parseDecList(){
+    parseDecItem();
+    parseDecListTail();
+}
+
+void parseDecListTail(){
+    if (current_token_parse.type == COMMA){
+        if(!match(COMMA)) return;
+        parseDecItem();
+        parseDecListTail();
+    }
+}
+
+void parseDecItem(){
+    if(!match(IDENT)) return;
+    parseDecItemSuffix();
+}
+
+void parseDecItemSuffix(){
     if (current_token_parse.type == ASSIGN_OP){
         if(!match(ASSIGN_OP)) return;
+
+        // special-case: allow `get(...)` directly in declarations
+        if (current_token_parse.type == GET) {
+            parseInputStmnt();
+            return;
+        }
+
+        // otherwise parse a normal expression
         parseExpr();
     }
 }
+
 
 // --------- INPUT STATEMENT ---------
 
@@ -263,23 +299,27 @@ void parseConditionalStmnt(){
 }
 
 void parseElifList(){
-    if (current_token_parse.type == ELIF){
+    // parse zero or more `elif (cond) { ... }`
+    while (current_token_parse.type == ELIF) {
         if (!match(ELIF)) return;
+        if (!match(LEFT_PAREN)) return;
         parseExpr();
+        if (!match(RIGHT_PAREN)) return;
         if (!match(LCBRACE)) return;
         parseStatementList();
         if (!match(RCBRACE)) return;
-        parseElifList();
     }
 }
 
 void parseElseOpt(){
     if (current_token_parse.type == ELSE){
+        if (!match(ELSE)) return;
         if (!match(LCBRACE)) return;
         parseStatementList();
         if (!match(RCBRACE)) return;
     }
 }
+
 
 // ------ ITERATIVE --------
 void parseIterStmnt(){
@@ -402,7 +442,7 @@ void parsePrimary(){
         case SYM_LIT:
         case TRUE:
         case FALSE:
-        case TEX_LIT:
+        case TEXT_LIT:
             match(current_token_parse.type);
             break;
 
