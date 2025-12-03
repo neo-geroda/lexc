@@ -32,6 +32,16 @@ void parseExpr();
 void parseElifList();
 void parseElseOpt();
 void panicRecovery();
+// ---- Expression Forward Declarations ----
+void parseBoolExpr();
+void parseRelExpr();
+void parseAddExpr();
+void parseTerm();
+void parsePower();
+void parseUnary();
+void parsePostfix();
+void parsePrimary();
+
 
 // match returns 1 (success) or 0 (failed)
 int match(int expected);
