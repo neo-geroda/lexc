@@ -13,6 +13,7 @@
 // void parseFunctionDef();
 // void parseOptParamDefs();
 
+void parseProgram();
 void parseStatementList();
 void parseStatement();
 void parseIdList();
@@ -30,6 +31,7 @@ void parseDecSuffix();
 void parseExpr();
 void parseElifList();
 void parseElseOpt();
+void panicRecovery();
 
 // match returns 1 (success) or 0 (failed)
 int match(int expected);
@@ -226,7 +228,7 @@ void parseAssStmnt() {
     if (!match(ASSIGN_OP)) return;
 
     if (current_token_parse.type == GET) {
-        parseInputStatement();  // already matched semicolon inside
+        parseInputStmnt();  // already matched semicolon inside
         return;
     }
 
