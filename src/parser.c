@@ -89,7 +89,9 @@ void panicRecovery() {
 
     if (current_token_parse.type == SEMICOLON) {
         printf("Recovered at ;\n");
-        parse_index++;
+
+        // because you are consuming semicolon here and then outside too
+        // parse_index++;
     }
 }
 
@@ -237,7 +239,7 @@ void parseAssStmnt() {
     if (!match(ASSIGN_OP)) return;
 
     if (current_token_parse.type == GET) {
-        parseInputStmnt();  // already matched semicolon inside
+        parseInputStmnt();  
         return;
     }
 
@@ -295,8 +297,10 @@ void parseJumpStmnt(){
     switch(current_token_parse.type){
         case CONTINUE:
             if(!match(CONTINUE)) return;
+            break;
         case STOP:
             if (!match(STOP)) return;
+            break;
     }
 }
 
