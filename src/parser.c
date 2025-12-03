@@ -299,8 +299,6 @@ void parseNoise(){
 
 // ----- All about Expression -------
 
-// --------------- Updated expressions block
-
 void parseExpr () {
     parseBoolExpr ();
 }
