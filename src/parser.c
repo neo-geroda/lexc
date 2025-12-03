@@ -7,19 +7,25 @@
 #include "../include/lexer.h"
 #include "../include/token_stream.h"
 
-// ---- Forward declarations ----
-void parseProgram();
-void parseStatementList();
-void parseStatement();
-void parseInputStatement();
-int  parseDataType();
-void parseOutputStatement();
-void parseExpr();
-void parseLit();
-void parseAssStatement();
-void parseDecStatement();
+void parseLexC();
+void parseProgramItem();
+void parseProgramTail();
+void parseStmnt();
+void parseFunctionDef();
+void parseStmntList();
+void parseOptParamDefs();
+void parseIdList();
+void parseIdListTail();
+int parseDataType();
+void parseDecStmnt();
+void parseInputStmnt();
+void parseOutputStmnt();
+void parseAssStmnt();
+void parseConditionalStmnt();
+void parseIterStmnt();
+void parseJumpStmnt();
 void parseDecSuffix();
-void panicRecovery();
+void parseExpr();
 
 // match returns 1 (success) or 0 (failed)
 int match(int expected);
@@ -73,19 +79,35 @@ void panicRecovery() {
 }
 
 // --------- GRAMMAR ---------
-
 void parseProgram() {
     parseStatementList();
 }
 
 void parseStatementList() {
     while (parse_index < count &&
-           current_token_parse.type != EOF_TOKEN &&
-           current_token_parse.type != RCBRACE)
+           current_token_parse.type != EOF_TOKEN)
     {
         parseStatement();
+        if(!match(SEMICOLON)) return;
     }
 }
+
+// -------- All about identifiers ------
+
+void parseIdList(){
+    if (!match(IDENT)) return;
+    parseIdListTail();
+}
+
+void parseIdListTail(){    
+    if(current_token_parse.type == COMMA){
+        if (!match(COMMA)) return;
+        if (!match(IDENT)) return;
+        parseIdListTail();
+    }
+}
+
+// ------- Statements enrty point --------
 
 void parseStatement() {
     switch (current_token_parse.type) {
@@ -101,6 +123,16 @@ void parseStatement() {
         case IDENT:
             parseAssStatement();
             break;
+        
+        case IF:
+            parseConditionalStmnt();
+            break;
+        
+        // Also return here
+        case STOP:
+        case CONTINUE:
+            parseJumpStmnt();
+            break;
 
         case NUMBER:
         case DECIMAL:
@@ -111,11 +143,33 @@ void parseStatement() {
             parseDecStatement();
             break;
 
+        case REPEATFOR:
+            parseIterStmnt();
+            break;
+
         default:
             printf("Syntax error: unexpected token %s\n",
                    current_token_parse.name);
             panicRecovery();
             break;
+    }
+}
+
+// ---- Declaration Statement ---------
+
+void parseDecStmnt(){
+    parseDataType();
+    parseIdList();
+
+    // if (!match(IDENT)) return;
+
+    parseDecSuffix();
+}
+
+void parseDecSuffix(){
+    if (current_token_parse.type == ASSIGN_OP){
+        if(!match(ASSIGN_OP)) return;
+        parseExpr();
     }
 }
 
@@ -128,7 +182,6 @@ void parseInputStatement() {
     if (!parseDataType()) return;
 
     if (!match(RIGHT_PAREN)) return;
-    if (!match(SEMICOLON)) return;
 }
 
 // --------- DATATYPE ---------
@@ -151,7 +204,7 @@ int parseDataType() {
     }
 }
 
-// --------- OUTPUT STATEMENT ---------
+// ----- OUTPUT ------
 
 void parseOutputStatement() {
     if (!match(DISPLAY)) return;
@@ -160,37 +213,9 @@ void parseOutputStatement() {
     parseExpr();
 
     if (!match(RIGHT_PAREN)) return;
-    if (!match(SEMICOLON)) return;
 }
 
-// --------- EXPRESSIONS ---------
-
-void parseExpr() {
-    if (current_token_parse.type == IDENT) {
-        match(IDENT);
-        return;
-    }
-    parseLit();
-}
-
-void parseLit() {
-    switch (current_token_parse.type) {
-        case NUM_LIT:
-        case DEC_LIT:
-        case SYM_LIT:
-        case TRUE:
-        case FALSE:
-            match(current_token_parse.type);
-            break;
-
-        default:
-            printf("Syntax error: expected literal, found %s\n",
-                   current_token_parse.name);
-            break;
-    }
-}
-
-// --------- ASSIGNMENT ---------
+// -----  ASSIGNMENT -------
 
 void parseAssStatement() {
     if (!match(IDENT)) return;
@@ -202,30 +227,216 @@ void parseAssStatement() {
     }
 
     parseExpr();
-    match(SEMICOLON); // safe, will recover if wrong
 }
 
-// --------- DECLARATION ---------
+// ----------- CONDITIONAL ------------
 
-void parseDecStatement() {
-    if (!parseDataType()) return;
-    if (!match(IDENT)) return;
-
-    parseDecSuffix();
+void parseConditionalStmnt(){
+    if (!match(IF)) return;
 }
 
-void parseDecSuffix() {
-    if (current_token_parse.type == SEMICOLON) {
-        match(SEMICOLON);
+
+
+
+
+
+// ----- All about Expression -------
+
+void parseExpr() {
+    if (current_token_parse.type == IDENT) {
+        match(IDENT);
+        return;
     }
-    else if (current_token_parse.type == ASSIGN_OP) {
-        match(ASSIGN_OP);
-        parseExpr();
-        match(SEMICOLON);
-    }
-    else {
-        printf("Syntax error in declaration at token %s\n",
-               current_token_parse.name);
-        panicRecovery();
-    }
+    parseLit();
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+// ---- Forward declarations ----
+// void parseProgram();
+// void parseStatementList();
+// void parseStatement();
+// void parseInputStatement();
+// int  parseDataType();
+// void parseOutputStatement();
+// void parseExpr();
+// void parseLit();
+// void parseAssStatement();
+// void parseDecStatement();
+// void parseDecSuffix();
+// void panicRecovery();
+
+// void parseProgram() {
+//     parseStatementList();
+// }
+
+// void parseStatementList() {
+//     while (parse_index < count &&
+//            current_token_parse.type != EOF_TOKEN &&
+//            current_token_parse.type != RCBRACE)
+//     {
+//         parseStatement();
+//     }
+// }
+
+// void parseStatement() {
+//     switch (current_token_parse.type) {
+
+//         case GET:
+//             parseInputStatement();
+//             break;
+
+//         case DISPLAY:
+//             parseOutputStatement();
+//             break;
+
+//         case IDENT:
+//             parseAssStatement();
+//             break;
+
+//         case NUMBER:
+//         case DECIMAL:
+//         case TEXT:
+//         case BOOL:
+//         case SYMBOL:
+//         case LIST:
+//             parseDecStatement();
+//             break;
+
+//         default:
+//             printf("Syntax error: unexpected token %s\n",
+//                    current_token_parse.name);
+//             panicRecovery();
+//             break;
+//     }
+// }
+
+// // --------- INPUT STATEMENT ---------
+
+// void parseInputStatement() {
+//     if (!match(GET)) return;
+//     if (!match(LEFT_PAREN)) return;
+
+//     if (!parseDataType()) return;
+
+//     if (!match(RIGHT_PAREN)) return;
+//     if (!match(SEMICOLON)) return;
+// }
+
+// // --------- DATATYPE ---------
+
+// int parseDataType() {
+//     switch (current_token_parse.type) {
+//         case NUMBER:
+//         case DECIMAL:
+//         case BOOL:
+//         case SYMBOL:
+//         case TEXT:
+//         case LIST:
+//             match(current_token_parse.type);
+//             return 1;
+
+//         default:
+//             printf("Syntax error: expected a data type, found %s\n",
+//                    current_token_parse.name);
+//             return 0;
+//     }
+// }
+
+// // --------- OUTPUT STATEMENT ---------
+
+// void parseOutputStatement() {
+//     if (!match(DISPLAY)) return;
+//     if (!match(LEFT_PAREN)) return;
+
+//     parseExpr();
+
+//     if (!match(RIGHT_PAREN)) return;
+//     if (!match(SEMICOLON)) return;
+// }
+
+// // --------- EXPRESSIONS ---------
+
+// void parseExpr() {
+//     if (current_token_parse.type == IDENT) {
+//         match(IDENT);
+//         return;
+//     }
+//     parseLit();
+// }
+
+// void parseLit() {
+//     switch (current_token_parse.type) {
+//         case NUM_LIT:
+//         case DEC_LIT:
+//         case SYM_LIT:
+//         case TRUE:
+//         case FALSE:
+//             match(current_token_parse.type);
+//             break;
+
+//         default:
+//             printf("Syntax error: expected literal, found %s\n",
+//                    current_token_parse.name);
+//             break;
+//     }
+// }
+
+// // --------- ASSIGNMENT ---------
+
+// void parseAssStatement() {
+//     if (!match(IDENT)) return;
+//     if (!match(ASSIGN_OP)) return;
+
+//     if (current_token_parse.type == GET) {
+//         parseInputStatement();  // already matched semicolon inside
+//         return;
+//     }
+
+//     parseExpr();
+//     match(SEMICOLON); // safe, will recover if wrong
+// }
+
+// // --------- DECLARATION ---------
+
+// void parseDecStatement() {
+//     if (!parseDataType()) return;
+//     if (!match(IDENT)) return;
+
+//     parseDecSuffix();
+// }
+
+// void parseDecSuffix() {
+//     if (current_token_parse.type == SEMICOLON) {
+//         match(SEMICOLON);
+//     }
+//     else if (current_token_parse.type == ASSIGN_OP) {
+//         match(ASSIGN_OP);
+//         parseExpr();
+//         match(SEMICOLON);
+//     }
+//     else {
+//         printf("Syntax error in declaration at token %s\n",
+//                current_token_parse.name);
+//         panicRecovery();
+//     }
+// }
+*/
