@@ -1,0 +1,8 @@
+number k;
+y = get(decimal);
+k = 10;
+display(k);
+k = get(number);
+display(k);
+k = y;
+text kim_name = "kim Audrey";

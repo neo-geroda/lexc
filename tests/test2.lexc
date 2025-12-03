@@ -62,3 +62,6 @@ not or and !
 À
 _kim
 
+number int = 1;
+symbol char = 'a';
+

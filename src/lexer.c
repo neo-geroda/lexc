@@ -1,8 +1,12 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include "lookupkeywords.h"  // Include the lookupKeywords function
-#include "tokens.h"          // Token definitions
+#include "../include/lookupkeywords.h"  // Include the lookupKeywords function
+#include "../include/tokens.h"          // Token definitions
+#include "../include/symbol_table.h"    // Symbol table functions
+#include "../include/lexer.h"          // Lexer function declarations
+#include "../include/token_stream.h"    // Token stream wrapper
+#include <stdlib.h>
 
 /* Global declarations */
 /* Variables */
@@ -14,6 +18,8 @@ char current_token[100];
 int nextToken;
 FILE *in_fp;
 int lastTokenReturned = -1;
+int lineNumber = 1;
+int tokenLineNumber = 1;  /* Line number where current token starts */
 
 /* Function declarations */
 void addChar(void);
@@ -22,27 +28,62 @@ void getNonBlank(void);
 int lex(void);
 int lookupKeywords(char *s);
 
-    int main(int argc, char **argv) {
+Token *tokens = NULL;      // dynamic array
+size_t count = 0;          // how many items we have
+size_t capacity = 0;       // current allocated size
+
+   int runLexerTest(int argc, char **argv) { 
         const char *filename = "test.lexc";
         if (argc > 1) filename = argv[1];
 
-        if ((in_fp = fopen(filename, "r")) == NULL) {
+        const char *dot = strrchr(filename, '.');
+        if (!dot || strcmp(dot, ".lexc") != 0) {
+            printf("ERROR - input file must have a .lexc extension\n");
+            return 1;
+        }
+
+        FILE *fp = fopen(filename, "r");
+        if (fp == NULL) {
             printf("ERROR - cannot open %s\n", filename);
             return 1;
         }
 
-        printf("--------------------------------------------------------------\n");
-        printf("|Token Key\t|Token Name\t\t|Lexeme\t\n");
-        printf("--------------------------------------------------------------\n");
+        printf("------------------------------------------------------------------------------\n");
+        printf("|Line\t|Token Key\t|Token Name\t\t|Lexeme\t\n");
+        printf("------------------------------------------------------------------------------\n");
 
-        getChar();
+        init_lexer_stream(fp);
+
+        Token t;
         do {
-            lex();
-        } while (nextToken != EOF_TOKEN);
+            t = next_token();
 
-        fclose(in_fp);
+            // Skip single-line and multi-line comments
+            if (t.type != SINGLE_LINE_COMMENT && t.type != MULTILINE_COMMENT) {
+                if (count == capacity) {
+                    capacity = capacity == 0 ? 4 : capacity * 2;
+                    tokens = realloc(tokens, capacity * sizeof(Token));
+                    if (!tokens) {
+                        fprintf(stderr, "Memory allocation failed\n");
+                        exit(1);
+                    }
+                }
+
+                tokens[count++] = t; 
+                // printf("Appended successfully!\n");
+            }
+
+            printf("|%-5d\t|%-15d|%-23s|%s\n", t.line, t.type, t.name, t.lexeme);
+
+        } while (t.type != EOF_TOKEN);
+
+        printSymbolTable();
+
+        close_lexer_stream();
+        fclose(fp);
         return 0;
     }
+
 
     void readSingleLineComment(void) {
         addChar(); 
@@ -82,6 +123,10 @@ int lookupKeywords(char *s);
             }
         }
         return 1;
+    }
+
+    int isDelimiter(char ch) {
+        return ch == '(' || ch == ')' || ch == '[' || ch == ']' || ch == '{' || ch == '}';
     }
 
     int lookupOperators(char ch) {
@@ -234,6 +279,9 @@ int lookupKeywords(char *s);
         }
 
         nextChar = c;
+        if (c == '\n') {
+            lineNumber++;
+        }
         if (isalpha((unsigned char)c)) {
             charClass = LETTER;
         } else if (isdigit((unsigned char)c)) {
@@ -267,6 +315,9 @@ int lookupKeywords(char *s);
             return nextToken;
         }
 
+        /* Capture line number at start of token (after whitespace skipped) */
+        tokenLineNumber = lineNumber;
+
         switch (charClass) {
             case LETTER:
                 addChar();
@@ -285,6 +336,9 @@ int lookupKeywords(char *s);
                     nextToken = UNKNOWN_TOKEN;
                 } else {
                     nextToken = lookupKeywords(lexeme);
+                    if(nextToken == IDENT) {
+                        addSymbol(lexeme, CAT_VAR, TYPE_NONE, 0, tokenLineNumber);
+                    }
                 }
                 break;
             case DIGIT:
@@ -307,10 +361,15 @@ int lookupKeywords(char *s);
                 break;
             case UNKNOWN:
                 char start_char = nextChar;
-                addChar();
-                getChar();
-
-                if(start_char == '~') {
+                
+                if (isDelimiter(start_char)) {
+                    addChar();
+                    getChar();
+                    lexeme[lexLen] = '\0';
+                    nextToken = lookupOperators(start_char);
+                } else if(start_char == '~') {
+                    addChar();
+                    getChar();
                     if (nextChar == '~') {
                         readSingleLineComment();
                         nextToken = SINGLE_LINE_COMMENT;
@@ -319,6 +378,8 @@ int lookupKeywords(char *s);
                         nextToken = MULTILINE_COMMENT;
                     }
                 } else if (start_char == '"') {
+                    addChar();
+                    getChar();
                     while (nextChar != EOF && nextChar != '\"') {
                         addChar();
                         getChar();
@@ -331,6 +392,8 @@ int lookupKeywords(char *s);
                     }
                     nextToken = TEX_LIT;
                 } else if (start_char == '\'') {
+                    addChar();
+                    getChar();
                     while (nextChar != EOF && nextChar != '\'') {
                         addChar();
                         getChar();
@@ -342,6 +405,8 @@ int lookupKeywords(char *s);
                     }
                     nextToken = SYM_LIT;
                 } else if (charClass == LETTER || charClass == DIGIT || nextChar == '_') {
+                    addChar();
+                    getChar();
                     while (charClass == LETTER || charClass == DIGIT || (nextChar == '_' && lexeme[lexLen-1] != '_')) {
                         if (nextChar == '_') {
                             addChar();
@@ -353,20 +418,19 @@ int lookupKeywords(char *s);
                     }
                     nextToken = UNKNOWN_TOKEN;
                 } else {
-                    lexLen = 1;
-                    lexeme[1] = '\0';
+                    addChar();
+                    getChar();
+                    lexeme[lexLen] = '\0';
                     nextToken = lookupOperators(start_char);
                 }
                 break;
         }
-        // if(sizeof(token(nextToken)) <= 8){
-        //     printf("|%d\t\t|%s\t\t|%s\t\n", nextToken, token(nextToken), lexeme);
-        // } else if (sizeof(token(nextToken)) <= 16){
-        //     printf("|%d\t\t|%s\t|%s\t\n", nextToken, token(nextToken), lexeme);
-        // } else {
-        //     printf("|%d\t\t|%s\t|%s\t\n", nextToken, token(nextToken), lexeme);
-        // }
-        printf("|%-15d|%-23s|%s\n", nextToken, token(nextToken), lexeme);
+
         lastTokenReturned = nextToken;
         return nextToken;
     }
+
+void lexer_set_input(FILE *in) {
+    in_fp = in;
+    getChar();
+}

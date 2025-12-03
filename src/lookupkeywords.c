@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <ctype.h>
-#include "tokens.h"
+#include "../include/lookupkeywords.h"
+#include "../include/tokens.h"
 
 const char *YYCursor;
 char yych;
