@@ -39,6 +39,7 @@ void parse() {
 
 // --------- MATCH & RECOVERY ---------
 
+// This can be edited to just return error codes
 int match(int expected) {
     if (current_token_parse.type == expected) {
         printf("Consumed: %s\n", current_token_parse.name);
