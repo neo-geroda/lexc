@@ -273,12 +273,10 @@ void parseIterStmnt(){
     if (!match(REPEAT)) return;
     if (!match(LEFT_PAREN)) return;
     parseExpr();
-    parseNoise();
     if (!match(RIGHT_PAREN)) return;
     if (!match(LCBRACE)) return;
     parseStatementList();
     if (!match(RCBRACE)) return;
-    parseNoise();
 
 }
 
@@ -288,12 +286,6 @@ void parseJumpStmnt(){
             if(!match(CONTINUE)) return;
         case STOP:
             if (!match(STOP)) return;
-    }
-}
-
-void parseNoise(){
-    if (current_token_parse.type == NOISE_WORD){
-        if (!match(NOISE_WORD)) return;
     }
 }
 
