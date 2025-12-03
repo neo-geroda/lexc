@@ -392,9 +392,6 @@ void parsePrimary(){
 
             case IDENT:
                 match(IDENT);
-                    if (current_token_parse.type == LEFT_PAREN) {
-                    parseFunctionCallTail();
-                }
             return;
 
             case LEFT_PAREN:
@@ -409,21 +406,6 @@ void parsePrimary(){
             panicRecovery();
             break;
             } 
-}
-
-void parseFunctionCallTail() {
-    match(LEFT_PAREN);
-
-        if (current_token_parse.type != RIGHT_PAREN) {
-            parseExpr();
-
-                while (current_token_parse.type == COMMA) {
-                    match(COMMA);
-                    parseExpr();
-                }
-        }
-
-    match(RIGHT_PAREN);
 }
 
 
