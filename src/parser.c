@@ -6,6 +6,7 @@
 #include "../include/symbol_table.h"
 #include "../include/lexer.h"
 #include "../include/token_stream.h"
+#include "../include/token_list.h"
 
 // void parseLexC();
 // void parseProgramItem();
@@ -74,8 +75,9 @@ int match(int expected) {
         return 1;
     }
 
-    printf("Syntax error: expected token %d but found %s\n",
-           expected, current_token_parse.name);
+    printf("Syntax error: expected token %d: %s but found %d: %s\n",
+           expected, token_name(expected),
+           current_token_parse.type, token_name(current_token_parse.type));
 
     panicRecovery();
     return 0;
