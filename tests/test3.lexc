@@ -1,0 +1,34 @@
+number x;
+decimal rate;
+text msg;
+bool flag;
+
+x = 10;
+rate = 3.14;
+msg = "hello";
+flag = true;
+
+display(x);
+display(rate + 2);
+display(msg);
+display(flag);
+
+x = get(number);
+rate = get(decimal);
+
+display(x + rate);
+
+if (x > 5) {
+    display("x is greater than 5");
+}
+elif (x == 5) {
+    display("x is equal to 5");
+}
+else {
+    display("x is less than 5");
+}
+
+repeat(3) {
+    x = x + 1;
+    display(x);
+}
