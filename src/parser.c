@@ -67,6 +67,114 @@ void parse() {
 
 // --------- MATCH & RECOVERY ---------
 
+// Reliable token name mapping using switch statement
+// This doesn't depend on token_list initialization
+const char* tokenTypeToString(int t) {
+    switch(t) {
+        // Basic tokens
+        case IDENT: return "IDENTIFIER";
+        case ASSIGN_OP: return "=";
+        case POS_OP: return "POS_OP";
+        case NEG_OP: return "NEG_OP";
+        case LEFT_PAREN: return "LEFT_PAREN (";
+        case RIGHT_PAREN: return "RIGHT_PAREN )";
+        
+        // Arithmetic Operators
+        case ADDITION_OP: return "+";
+        case SUBTRACT_OP: return "-";
+        case MULTIPLY_OP: return "*";
+        case DIVIDE_OP: return "/";
+        case MODULO_OP: return "%";
+        case EXPONENT_OP: return "**";
+        case FLOORDIV_OP: return "//";
+        case PRE_INCREMENT_OP: return "++";
+        case POST_INCREMENT_OP: return "++";
+        case PRE_DECREMENT_OP: return "--";
+        case POST_DECREMENT_OP: return "--";
+        
+        // Relational Operators
+        case EQUALITY_OP: return "==";
+        case INEQUALITY_OP: return "!=";
+        case GREATER_THAN_OP: return ">";
+        case LESS_THAN_OP: return "<";
+        case GREATER_EQUAL_OP: return ">=";
+        case LESS_EQUAL_OP: return "<=";
+        
+        // Logical Operators
+        case AND_OP: return "AND";
+        case OR_OP: return "OR";
+        case NOT_OP: return "NOT";
+        
+        // Keywords
+        case IF: return "IF";
+        case ELIF: return "ELIF";
+        case ELSE: return "ELSE";
+        case REPEAT: return "REPEAT";
+        case REPEATFOR: return "REPEATFOR";
+        case STOP: return "STOP";
+        case CONTINUE: return "CONTINUE";
+        case DISPLAY: return "DISPLAY";
+        case GET: return "GET";
+        case GIVE: return "GIVE";
+        case FUNCTION: return "FUNCTION";
+        case STATIC: return "STATIC";
+        case INCLUDE: return "INCLUDE";
+        case TRY: return "TRY";
+        case BUNDLE: return "BUNDLE";
+        case VOID: return "VOID";
+        case IN: return "IN";
+        case ONFAIL: return "ONFAIL";
+        
+        // Data Types
+        case NUMBER: return "NUMBER";
+        case DECIMAL: return "DECIMAL";
+        case SYMBOL: return "SYMBOL";
+        case BOOL: return "BOOL";
+        case STRING: return "STRING";
+        case TEXT: return "TEXT";
+        case LIST: return "LIST";
+        
+        // Literals
+        case TRUE: return "TRUE";
+        case FALSE: return "FALSE";
+        case NOTHING: return "NOTHING";
+        case NUM_LIT: return "NUMBER_LITERAL";
+        case DEC_LIT: return "DECIMAL_LITERAL";
+        case TEXT_LIT: return "TEXT_LITERAL";
+        case SYM_LIT: return "SYMBOL_LITERAL";
+        
+        // Delimiters
+        case SEMICOLON: return ";";
+        case COMMA: return ",";
+        case LSQBRACKET: return "[";
+        case RSQBRACKET: return "]";
+        case LCBRACE: return "LEFT_BRACE {";
+        case RCBRACE: return "RIGHT_BRACE }";
+        case DQUOTE: return "\"";
+        case SQUOTE: return "'";
+        case COLON: return ":";
+        
+        // Noise Words
+        case NOISE_WORD: return "NOISE_WORD";
+        
+        // Comments
+        case SINGLE_LINE_COMMENT: return "SINGLE_LINE_COMMENT";
+        case MULTILINE_COMMENT: return "MULTILINE_COMMENT";
+        
+        // Special
+        case EOF_TOKEN: return "EOF";
+        case UNKNOWN_TOKEN: return "UNKNOWN_TOKEN";
+        
+        default: return "UNKNOWN_TOKEN";
+    }
+}
+
+void printSyntaxError(int expected, int found) {
+    printf("Syntax error: expected token %d: %s but found %d: %s\n",
+           expected, tokenTypeToString(expected),
+           found, tokenTypeToString(found));
+}
+
 // This can be edited to just return error codes
 int match(int expected) {
     if (current_token_parse.type == expected) {
@@ -75,10 +183,7 @@ int match(int expected) {
         return 1;
     }
 
-    printf("Syntax error: expected token %d: %s but found %d: %s\n",
-           expected, token_name(expected),
-           current_token_parse.type, token_name(current_token_parse.type));
-
+    printSyntaxError(expected, current_token_parse.type);
     panicRecovery();
     return 0;
 }
