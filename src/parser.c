@@ -426,6 +426,59 @@ void parseFunctionCallTail() {
     match(RIGHT_PAREN);
 }
 
+// Function to parse comparison operators
+void compare_op() {
+    if (nextToken == EQUALITY_OP || nextToken == INEQUALITY_OP ||
+        nextToken == LESS_THAN_OP || nextToken == GREATER_THAN_OP ||
+        nextToken == LESS_EQUAL_OP || nextToken == GREATER_EQUAL_OP) {
+        printf("Found comparison operator: %s\n", token(nextToken));
+        lex();
+    } else {
+        printf("Syntax Error: Expected comparison operator.\n");
+    }
+}
+
+// Function to parse additive operators
+void additive_op() {
+    if (nextToken == ADDITION_OP || nextToken == SUBTRACT_OP) {
+        printf("Found additive operator: %s\n", token(nextToken));
+        lex();
+    } else {
+        printf("Syntax Error: Expected additive operator.\n");
+    }
+}
+
+// Function to parse multiplicative operators
+void multiplicative_op() {
+    if (nextToken == MULTIPLY_OP || nextToken == DIVIDE_OP ||
+        nextToken == FLOORDIV_OP || nextToken == MODULO_OP) {
+        printf("Found multiplicative operator: %s\n", token(nextToken));
+        lex();
+    } else {
+        printf("Syntax Error: Expected multiplicative operator.\n");
+    }
+}
+
+// Function to parse prefix operators
+void prefix_op() {
+    if (nextToken == PRE_INCREMENT_OP || nextToken == PRE_DECREMENT_OP) {
+        printf("Found prefix operator: %s\n", token(nextToken));
+        lex();
+    } else {
+        printf("Syntax Error: Expected prefix operator.\n");
+    }
+}
+
+// Function to parse postfix operators
+void postfix_op() {
+    if (nextToken == POST_INCREMENT_OP || nextToken == POST_DECREMENT_OP) {
+        printf("Found postfix operator: %s\n", token(nextToken));
+        lex();
+    } else {
+        printf("Syntax Error: Expected postfix operator.\n");
+    }
+}
+
 
 
 
