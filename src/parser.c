@@ -39,7 +39,6 @@ void parse() {
 
 // --------- MATCH & RECOVERY ---------
 
-// This can be edited to just return error codes
 int match(int expected) {
     if (current_token_parse.type == expected) {
         printf("Consumed: %s\n", current_token_parse.name);
@@ -73,6 +72,43 @@ void panicRecovery() {
 }
 
 // --------- GRAMMAR ---------
+
+void parseProgramTail1() {
+    while (current_token_parse.type != EOF_TOKEN) {
+        if (isFunctionDefAhead()) {
+            parseFunctionDef();
+        } else {
+            parseStatement();
+            match(SEMICOLON);
+        }
+    }
+}
+
+void parseFunctionDef() {
+    match(IDENT);        // function name
+    match(LEFT_PAREN);   // '('
+
+    // Optional parameter list
+    if (current_token_parse.type == IDENT) {
+        parseIDList();
+    }
+
+    match(RIGHT_PAREN);  // ')'
+    match(LCBRACE);      // '{'
+
+    parseStatementList(); // function body
+
+    match(RCBRACE);      // '}'
+}
+
+void parseIDList() {
+    match(IDENT);        // first parameter
+    while (current_token_parse.type == COMMA) {
+        match(COMMA);
+        match(IDENT);    // next parameter
+    }
+}
+
 
 void parseProgram() {
     parseStatementList();
