@@ -7,13 +7,14 @@
 #include "../include/lexer.h"
 #include "../include/token_stream.h"
 
-void parseLexC();
-void parseProgramItem();
-void parseProgramTail();
-void parseStmnt();
-void parseFunctionDef();
-void parseStmntList();
-void parseOptParamDefs();
+// void parseLexC();
+// void parseProgramItem();
+// void parseProgramTail();
+// void parseFunctionDef();
+// void parseOptParamDefs();
+
+void parseStatementList();
+void parseStatement();
 void parseIdList();
 void parseIdListTail();
 int parseDataType();
@@ -23,9 +24,12 @@ void parseOutputStmnt();
 void parseAssStmnt();
 void parseConditionalStmnt();
 void parseIterStmnt();
+// void parseRepeat();
 void parseJumpStmnt();
 void parseDecSuffix();
 void parseExpr();
+void parseElifList();
+void parseElseOpt();
 
 // match returns 1 (success) or 0 (failed)
 int match(int expected);
@@ -113,15 +117,15 @@ void parseStatement() {
     switch (current_token_parse.type) {
 
         case GET:
-            parseInputStatement();
+            parseInputStmnt();
             break;
 
         case DISPLAY:
-            parseOutputStatement();
+            parseOutputStmnt();
             break;
 
         case IDENT:
-            parseAssStatement();
+            parseAssStmnt();
             break;
         
         case IF:
@@ -140,10 +144,10 @@ void parseStatement() {
         case BOOL:
         case SYMBOL:
         case LIST:
-            parseDecStatement();
+            parseDecStmnt();
             break;
 
-        case REPEATFOR:
+        case REPEAT:
             parseIterStmnt();
             break;
 
@@ -175,7 +179,7 @@ void parseDecSuffix(){
 
 // --------- INPUT STATEMENT ---------
 
-void parseInputStatement() {
+void parseInputStmnt() {
     if (!match(GET)) return;
     if (!match(LEFT_PAREN)) return;
 
@@ -206,7 +210,7 @@ int parseDataType() {
 
 // ----- OUTPUT ------
 
-void parseOutputStatement() {
+void parseOutputStmnt() {
     if (!match(DISPLAY)) return;
     if (!match(LEFT_PAREN)) return;
 
@@ -217,7 +221,7 @@ void parseOutputStatement() {
 
 // -----  ASSIGNMENT -------
 
-void parseAssStatement() {
+void parseAssStmnt() {
     if (!match(IDENT)) return;
     if (!match(ASSIGN_OP)) return;
 
@@ -232,13 +236,68 @@ void parseAssStatement() {
 // ----------- CONDITIONAL ------------
 
 void parseConditionalStmnt(){
+
     if (!match(IF)) return;
+    if (!match(LEFT_PAREN)) return;
+    parseExpr();
+    if (!match(RIGHT_PAREN)) return;
+    if (!match(LCBRACE)) return;
+    parseStatementList();
+    if (!match(LCBRACE)) return;
+
+    parseElifList();
+    parseElseOpt();
 }
 
+void parseElifList(){
+    if (current_token_parse.type == ELIF){
+        if (!match(ELIF)) return;
+        parseExpr();
+        if (!match(LCBRACE)) return;
+        parseStatementList();
+        if (!match(RCBRACE)) return;
+        parseElifList();
+    }
+}
 
+void parseElseOpt(){
+    if (current_token_parse.type == ELSE){
+        if (!match(LCBRACE)) return;
+        parseStatementList();
+        if (!match(RCBRACE)) return;
+    }
+}
 
+// ------ ITERATIVE --------
+void parseIterStmnt(){
+    if (!match(REPEAT)) return;
+    if (!match(LEFT_PAREN)) return;
+    parseExpr();
+    if (!match(RIGHT_PAREN)) return;
+    if (!match(LCBRACE)) return;
+    parseStatementList();
+    if (!match(RCBRACE)) return;
 
+}
 
+void parseJumpStmnt(){
+    switch(current_token_parse.type){
+        case CONTINUE:
+            if(!match(CONTINUE)) return;
+        case STOP:
+            if (!match(STOP)) return;
+    }
+}
+
+// void parseRepeat(){
+
+// }
+
+// void parseNoise(){
+//     switch(current_token_parse.type){
+//         case THEN
+//     }
+// }
 
 // ----- All about Expression -------
 
