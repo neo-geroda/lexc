@@ -243,7 +243,7 @@ void parseConditionalStmnt(){
     if (!match(RIGHT_PAREN)) return;
     if (!match(LCBRACE)) return;
     parseStatementList();
-    if (!match(LCBRACE)) return;
+    if (!match(RCBRACE)) return;
 
     parseElifList();
     parseElseOpt();
@@ -273,10 +273,12 @@ void parseIterStmnt(){
     if (!match(REPEAT)) return;
     if (!match(LEFT_PAREN)) return;
     parseExpr();
+    parseNoise();
     if (!match(RIGHT_PAREN)) return;
     if (!match(LCBRACE)) return;
     parseStatementList();
     if (!match(RCBRACE)) return;
+    parseNoise();
 
 }
 
@@ -289,15 +291,11 @@ void parseJumpStmnt(){
     }
 }
 
-// void parseRepeat(){
-
-// }
-
-// void parseNoise(){
-//     switch(current_token_parse.type){
-//         case THEN
-//     }
-// }
+void parseNoise(){
+    if (current_token_parse.type == NOISE_WORD){
+        if (!match(NOISE_WORD)) return;
+    }
+}
 
 // ----- All about Expression -------
 
