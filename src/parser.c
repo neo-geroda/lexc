@@ -31,7 +31,7 @@ void parseDecItem();
 void parseDecListTail();
 void parseDecItemSuffix();
 void parseCompoundStatement();
-void parseBlock();
+
 void parseSimpleStatement();
 
 // void parseRepeat();
@@ -228,10 +228,6 @@ void parseStatementList() {
     }
 }
 
-
-
-
-
 // -------- All about identifiers ------
 
 void parseIdList(){
@@ -253,7 +249,7 @@ void parseStatement() {
     switch (current_token_parse.type) {
         case IF:
         case REPEAT:
-        case LCBRACE:      // allow nested anonymous blocks
+        case LCBRACE:     
             parseCompoundStatement();
             break;
 
@@ -273,20 +269,16 @@ void parseCompoundStatement() {
         parseIterStmnt();         // handles repeat(...) { ... }
         return;
     }
-    if (current_token_parse.type == LCBRACE) {
-        parseBlock();
-        return;
-    }
+    // if (current_token_parse.type == LCBRACE) {
+    //     if (!match(LCBRACE)) return;
+    //     parseStatementList();
+    //     if (!match(RCBRACE)) return;
+    //     return;
+    // }
 
     // unexpected — fallback
     printf("Syntax error: unexpected token %s\n", current_token_parse.name);
     panicRecovery();
-}
-
-void parseBlock() {
-    if (!match(LCBRACE)) return;
-    parseStatementList();
-    if (!match(RCBRACE)) return;
 }
 
 void parseSimpleStatement() {
