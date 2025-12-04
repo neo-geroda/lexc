@@ -8,6 +8,13 @@ x = 10;
 rate = 3.14;
 msg = "hello";
 flag = true;
+number my_age = (4*5) + 1;
+
+display(x);
+display("Hello World!");
+diplay("Hello" + "World!");
+
+text new_msg = msg;
 
 display(x);
 display(rate + 2);
@@ -29,7 +36,14 @@ else {
     display("x is less than 5");
     if("kim"){
         number kim = get(decimal);
-    };
+    }
+    else{
+        display("This is else!");
+    }
+}
+
+if (True){
+    display("This is if without else");
 }
 
 repeat(3) {
