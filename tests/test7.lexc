@@ -11,6 +11,9 @@ msg = "hello";
 flag = true;
 number my_age = (4*5) + 1;
 
+~~INPUT Statement
+x = get(number);
+
 ~ DISPLAY
 1. print variable value (ex. printf d)
 2. print string literal (ex. printf "Hello, world")
