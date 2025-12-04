@@ -1,0 +1,22 @@
+number x           
+decimal 123rate;   
+
+y = get decimal ); 
+
+x = ;              
+
+display( );         
+
+display( x + );    
+
+if x > 5) {        
+    display(x);
+}
+
+repeat x ) {        
+    display("test");
+}
+
+bool flag = tru;    
+
+display( unknownVar ); 

@@ -78,7 +78,7 @@
 #define NOTHING 132
 #define NUM_LIT 133
 #define DEC_LIT 134
-#define TEX_LIT 135
+#define TEXT_LIT 135
 #define SYM_LIT 136
 
 /* Delimiters */

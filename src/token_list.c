@@ -97,7 +97,7 @@ void init_token_list(void) {
     add_token(NOTHING, "nothing");
     add_token(NUM_LIT, "num_lit");
     add_token(DEC_LIT, "dec_lit");
-    add_token(TEX_LIT, "tex_lit");
+    add_token(TEXT_LIT, "text_lit");
     add_token(SYM_LIT, "sym_lit");
 
     add_token(SEMICOLON, ";");
