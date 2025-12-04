@@ -30,6 +30,9 @@ void parseIterStmnt();
 void parseDecItem();
 void parseDecListTail();
 void parseDecItemSuffix();
+void parseCompoundStatement();
+void parseBlock();
+void parseSimpleStatement();
 
 // void parseRepeat();
 void parseJumpStmnt();
@@ -219,11 +222,15 @@ void parseStatementList() {
     {
         parseStatement();
 
-        if (current_token_parse.type == SEMICOLON) {
-            match(SEMICOLON);
-        }
+        // if (current_token_parse.type == SEMICOLON) {
+        //     match(SEMICOLON);
+        // }
     }
 }
+
+
+
+
 
 // -------- All about identifiers ------
 
@@ -244,45 +251,60 @@ void parseIdListTail(){
 
 void parseStatement() {
     switch (current_token_parse.type) {
-
-        case GET:
-            parseInputStmnt();
-            break;
-
-        case DISPLAY:
-            parseOutputStmnt();
-            break;
-
-        case IDENT:
-            parseAssStmnt();
-            break;
-        
         case IF:
-            parseConditionalStmnt();
-            break;
-        
-        // Also return here
-        case STOP:
-        case CONTINUE:
-            parseJumpStmnt();
-            break;
-
-        case NUMBER:
-        case DECIMAL:
-        case TEXT:
-        case BOOL:
-        case SYMBOL:
-        case LIST:
-            parseDecStmnt();
-            break;
-
         case REPEAT:
-            parseIterStmnt();
+        case LCBRACE:      // allow nested anonymous blocks
+            parseCompoundStatement();
             break;
 
         default:
-            printf("Syntax error: unexpected token %s\n",
-                   current_token_parse.name);
+            parseSimpleStatement();
+            if (!match(SEMICOLON)) return;
+            break;
+    }
+}
+
+void parseCompoundStatement() {
+    if (current_token_parse.type == IF) {
+        parseConditionalStmnt();  // handles if (...) { ... } [elif...] [else...]
+        return;
+    }
+    if (current_token_parse.type == REPEAT) {
+        parseIterStmnt();         // handles repeat(...) { ... }
+        return;
+    }
+    if (current_token_parse.type == LCBRACE) {
+        parseBlock();
+        return;
+    }
+
+    // unexpected — fallback
+    printf("Syntax error: unexpected token %s\n", current_token_parse.name);
+    panicRecovery();
+}
+
+void parseBlock() {
+    if (!match(LCBRACE)) return;
+    parseStatementList();
+    if (!match(RCBRACE)) return;
+}
+
+void parseSimpleStatement() {
+    switch (current_token_parse.type) {
+        case NUMBER: case DECIMAL: case TEXT: case BOOL: case SYMBOL: case LIST:
+            parseDecStmnt();    // declaration (no semicolon here)
+            break;
+        case IDENT:
+            parseAssStmnt();    // assignment or expression start
+            break;
+        case DISPLAY:
+            parseOutputStmnt();
+            break;
+        case STOP: case CONTINUE:
+            parseJumpStmnt();
+            break;
+        default:
+            printf("Syntax error: unexpected token %s\n", current_token_parse.name);
             panicRecovery();
             break;
     }

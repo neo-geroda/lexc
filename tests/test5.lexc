@@ -8,7 +8,7 @@ else {
     display("x is less than 5");
     if("kim"){
         number kim = get(decimal);
-    };
+    }
 }
 
 number x, y, z;

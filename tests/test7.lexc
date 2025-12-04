@@ -1,0 +1,72 @@
+
+~ ASSIGNMENT
+1. Variable to variable (a = b)
+2. Constant to variable (a = 10)
+3. Expression result to variable (a = b + 10) or (a = x * y - 5)
+~
+
+x = 10;
+rate = 3.14;
+msg = "hello";
+flag = true;
+number my_age = (4*5) + 1;
+
+~ DISPLAY
+1. print variable value (ex. printf d)
+2. print string literal (ex. printf "Hello, world")
+3. print string + variable value (ex. printf "Hello, world", d)
+~
+display(x);
+display("Hello World!");
+display("Hello" + "World!");
+display("Hello" + msg);
+
+~ CONDITIONALS
+1. if
+2. else
+3. if-else-if
+~
+if (x > 5) {
+    display("x is greater than 5");
+}
+elif (x == 5) {
+    display("x is equal to 5");
+}
+else {
+    display("x is less than 5");
+    if("kim"){
+        number kim = get(decimal);
+    }
+    else{
+        display("This is else!");
+    }
+}
+
+if (True){
+    display("This is if without else");
+}
+
+~ ITERATION
+Required rules (accdg to criteria):
+1. 1 simple iteration
+2. 1 nested iteration
+~
+repeat(True) then {
+    display("Hello madlang peeople!");
+} end
+
+repeat(3) {
+    x = x + 1;
+    display(x);
+
+    repeat(x < 1){
+        display("Yes" + "FM!");
+    }
+}
+
+~~ DECLARATION
+number x;
+decimal rate;
+text msg;
+bool flag;
+number y = 7;
