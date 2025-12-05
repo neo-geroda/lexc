@@ -343,7 +343,24 @@ void parseDecItemSuffix(){
 
         // otherwise parse a normal expression
         parseExpr();
+        return;
     }
+
+    if (current_token_parse.type == COMMA) {
+        // Save the current state for backtracking
+        size_t saved_index = parse_index;
+
+        // Attempt to parse the `, <DEC_ITEM>` alternative
+        if (match(COMMA)) {
+            parseDecItem();
+            return;
+        }
+
+        // Backtrack if parsing failed
+        parse_index = saved_index;
+    }
+
+    // Epsilon production: do nothing
 }
 
 
