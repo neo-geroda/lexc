@@ -60,6 +60,42 @@ size_t parse_index = 0;
 
 #define current_token_parse tokens[parse_index]
 
+// Backtracking stack
+#define MAX_BACKTRACK 128
+size_t backtrack_stack[MAX_BACKTRACK];
+int backtrack_top = -1;
+
+void btPush() {
+    if (backtrack_top < MAX_BACKTRACK - 1)
+        backtrack_stack[++backtrack_top] = parse_index;
+    else
+        printf("Backtracking stack overflow\n");
+}
+
+void btCommit() {
+    if (backtrack_top >= 0)
+        backtrack_top--;
+}
+
+void btRollback() {
+    if (backtrack_top >= 0)
+        parse_index = backtrack_stack[backtrack_top--];
+    else
+        printf("ERROR: Backtracking stack underflow!\n");
+}
+
+// soft matching for backtracking
+int softMatch(int expected) {
+    if (current_token_parse.type == expected) {
+        parse_index++;
+        return 1;
+    }
+    return 0;
+}
+
+
+
+
 // --------- PARSE ENTRY POINT ---------
 
 void parse() {
@@ -331,20 +367,46 @@ void parseDecItem(){
     parseDecItemSuffix();
 }
 
-void parseDecItemSuffix(){
-    if (current_token_parse.type == ASSIGN_OP){
-        if(!match(ASSIGN_OP)) return;
+void parseDecItemSuffix() {
 
-        // special-case: allow `get(...)` directly in declarations
+    // id = <expr> --------
+    if (current_token_parse.type == ASSIGN_OP) {
+        match(ASSIGN_OP);
+
         if (current_token_parse.type == GET) {
             parseInputStmnt();
             return;
         }
 
-        // otherwise parse a normal expression
         parseExpr();
+        return;
     }
+
+
+    // id , <DECL_ITEM> non-deterministic
+    if (current_token_parse.type == COMMA) {
+
+        btPush();  // save parse_index
+
+        if (softMatch(COMMA)) {
+
+            if (current_token_parse.type == IDENT) {
+                // recursively parse `<DECL_ITEM>`
+                parseDecItem();
+
+                btCommit();  // keeps the result
+                return;
+            }
+        }
+
+        // restore parse_index (comma belongs to DECL_LIST_TAIL )
+        btRollback();
+    }
+
+    // epsilon
+    return;
 }
+
 
 
 // --------- INPUT STATEMENT ---------

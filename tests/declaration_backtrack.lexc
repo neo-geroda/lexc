@@ -1,0 +1,41 @@
+
+number a;
+
+number b = 10;
+
+number x, y, z;
+
+
+
+number c, d;
+
+number m, n = 5, o;
+
+number p , q = 5;
+
+number aa , bb , cc = 10 , dd;
+
+
+number , a;
+
+number q = ;
+
+number r,, s;
+
+number t
+
+number u = 5 + ;
+
+
+a = 20;
+
+display(a);
+
+repeat(a) {
+    a = a + 1;
+    display(a);
+}
+
+if(a > 1) {
+    display(a);
+}
