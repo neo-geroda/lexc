@@ -73,5 +73,3 @@ decimal rate;
 text msg;
 bool flag;
 number y = 7;
-
-number x, y, z = 10;
