@@ -28,9 +28,16 @@ void getNonBlank(void);
 int lex(void);
 int lookupKeywords(char *s);
 
+void lexer_set_outpath(const char *path) {
+    if (!path) return;
+    strncpy(lexer_outpath, path, sizeof(lexer_outpath) - 1);
+    lexer_outpath[sizeof(lexer_outpath) - 1] = '\0';
+}
+
 Token *tokens = NULL;      // dynamic array
 size_t count = 0;          // how many items we have
 size_t capacity = 0;       // current allocated size
+char lexer_outpath[260] = "lexer_tokens.txt";
 
    int runLexerTest(int argc, char **argv) { 
         const char *filename = "test.lexc";
@@ -54,28 +61,39 @@ size_t capacity = 0;       // current allocated size
 
         init_lexer_stream(fp);
 
+        FILE *out = fopen(lexer_outpath, "w");
+        if (out) {
+            fprintf(out, "Line\tType\tName\tLexeme\n");
+        } else {
+            fprintf(stderr, "Warning: could not open %s for writing\n", lexer_outpath);
+        }
+
         Token t;
         do {
             t = next_token();
-
-            // Skip single-line and multi-line comments
             if (t.type != SINGLE_LINE_COMMENT && t.type != MULTILINE_COMMENT && t.type != NOISE_WORD) {
                 if (count == capacity) {
                     capacity = capacity == 0 ? 4 : capacity * 2;
                     tokens = realloc(tokens, capacity * sizeof(Token));
                     if (!tokens) {
                         fprintf(stderr, "Memory allocation failed\n");
+                        if (out) fclose(out);
                         exit(1);
                     }
                 }
 
                 tokens[count++] = t; 
-                // printf("Appended successfully!\n");
             }
 
             printf("|%-5d\t|%-15d|%-23s|%s\n", t.line, t.type, t.name, t.lexeme);
 
+            if (out) {
+                fprintf(out, "%d\t%d\t%s\t%s\n", t.line, t.type, t.name, t.lexeme);
+            }
+
         } while (t.type != EOF_TOKEN);
+
+        if (out) fclose(out);
 
         printSymbolTable();
 
