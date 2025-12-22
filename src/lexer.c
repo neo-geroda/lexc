@@ -55,9 +55,9 @@ char lexer_outpath[260] = "lexer_tokens.txt";
             return 1;
         }
 
-        printf("------------------------------------------------------------------------------\n");
-        printf("|Line\t|Token Key\t|Token Name\t\t|Lexeme\t\n");
-        printf("------------------------------------------------------------------------------\n");
+        // printf("------------------------------------------------------------------------------\n");
+        // printf("|Line\t|Token Key\t|Token Name\t\t|Lexeme\t\n");
+        // printf("------------------------------------------------------------------------------\n");
 
         init_lexer_stream(fp);
 
@@ -85,7 +85,7 @@ char lexer_outpath[260] = "lexer_tokens.txt";
                 tokens[count++] = t; 
             }
 
-            printf("|%-5d\t|%-15d|%-23s|%s\n", t.line, t.type, t.name, t.lexeme);
+            // printf("|%-5d\t|%-15d|%-23s|%s\n", t.line, t.type, t.name, t.lexeme);
 
             if (out) {
                 fprintf(out, "%d\t%d\t%s\t%s\n", t.line, t.type, t.name, t.lexeme);
@@ -95,7 +95,7 @@ char lexer_outpath[260] = "lexer_tokens.txt";
 
         if (out) fclose(out);
 
-        printSymbolTable();
+        // printSymbolTable();
 
         close_lexer_stream();
         fclose(fp);
@@ -276,7 +276,7 @@ char lexer_outpath[260] = "lexer_tokens.txt";
             lexeme[lexLen++] = (char)nextChar;
             lexeme[lexLen] = '\0';
         } else {
-            printf("ERROR - lexeme is too long\n");
+            // printf("ERROR - lexeme is too long\n");
             lexLen = 0;
             lexeme[0] = '\0';
         }

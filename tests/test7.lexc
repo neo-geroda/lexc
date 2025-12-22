@@ -6,8 +6,8 @@
 ~
 
 x = 10;
-rate = 3.14;
-msg = "hello";
+rate = 3.14
+: msg = "hello"k;
 flag = true;
 number my_age = (4*5) + 1;
 
@@ -60,12 +60,12 @@ repeat(True) then {
 
 repeat(3) {
     x = x + 1;
-    display(x) ~~ dito nagsisimula error
+    display(x) ~~ This is where the error starts
 
     repeat(x < 1){
         display("Yes" + "FM!");
-    } ~~ ito yung mali
-}
+    } ~~ after recovering with ; it reads RCBRACE
+} ~~ this is not expected
 
 ~~ DECLARATION
 number x;
