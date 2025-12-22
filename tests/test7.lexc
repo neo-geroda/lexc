@@ -60,11 +60,11 @@ repeat(True) then {
 
 repeat(3) {
     x = x + 1;
-    display(x);
+    display(x) ~~ dito nagsisimula error
 
     repeat(x < 1){
         display("Yes" + "FM!");
-    }
+    } ~~ ito yung mali
 }
 
 ~~ DECLARATION

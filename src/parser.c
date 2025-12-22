@@ -222,9 +222,9 @@ void parseStatementList() {
     {
         parseStatement();
 
-        // if (current_token_parse.type == SEMICOLON) {
-        //     match(SEMICOLON);
-        // }
+        if (current_token_parse.type == SEMICOLON) {
+            match(SEMICOLON);
+        }
     }
 }
 
