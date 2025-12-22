@@ -11,16 +11,19 @@
 int lex(void);
 int runLexerTest(int argc, char **argv);
 void lexer_set_input(FILE *in);
+void lexer_set_outpath(const char *path);
 
 extern int nextToken;
 extern char lexeme[100];
 extern int lexLen;
 extern int lineNumber;
-extern int tokenLineNumber;  /* Line number where current token starts */
+extern int tokenLineNumber;
 
 
 extern Token *tokens;
 extern size_t count;
 extern size_t capacity;
+
+extern char lexer_outpath[260];
 
 #endif
