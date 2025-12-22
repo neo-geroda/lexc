@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
     // }
 
     // Run the parser on the tokens array
-    printf("\n--- Parsing ---\n");
+    // printf("\n--- Parsing ---\n");
     parse();
 
     return 0;

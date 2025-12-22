@@ -7,7 +7,7 @@ Line	Type	Name	Lexeme
 9	11	IDENT	rate
 9	20	=	=
 9	134	dec_lit	3.14
-9	140	;	;
+10	148	:	:
 10	11	IDENT	msg
 10	20	=	=
 10	135	text_lit	"hello"
@@ -157,7 +157,7 @@ Line	Type	Name	Lexeme
 63	23	(	(
 63	11	IDENT	x
 63	24	)	)
-63	151	SINGLE_LINE_COMMENT	~~ dito nagsisimula error
+63	151	SINGLE_LINE_COMMENT	~~ This is where the error starts
 65	103	repeat	repeat
 65	23	(	(
 65	11	IDENT	x
@@ -173,8 +173,9 @@ Line	Type	Name	Lexeme
 66	24	)	)
 66	140	;	;
 67	145	}	}
-67	151	SINGLE_LINE_COMMENT	~~ ito yung mali
+67	151	SINGLE_LINE_COMMENT	~~ after recovering with ; it reads RCBRACE
 68	145	}	}
+68	151	SINGLE_LINE_COMMENT	~~ this is not expected
 70	151	SINGLE_LINE_COMMENT	~~ DECLARATION
 71	120	number	number
 71	11	IDENT	x

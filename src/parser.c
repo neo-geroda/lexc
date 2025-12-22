@@ -172,8 +172,10 @@ const char* tokenTypeToString(int t) {
     }
 }
 
-void printSyntaxError(int expected, int found) {
-    printf("Syntax error: expected token %d: %s but found %d: %s\n",
+// add here which line
+void printSyntaxError(int expected, int found, int line) {
+    printf("Syntax error (Line %d): expected token %d: %s but found %d: %s\n",
+            line,
            expected, tokenTypeToString(expected),
            found, tokenTypeToString(found));
 }
@@ -181,33 +183,55 @@ void printSyntaxError(int expected, int found) {
 // This can be edited to just return error codes
 int match(int expected) {
     if (current_token_parse.type == expected) {
-        printf("Consumed: %s\n", current_token_parse.name);
+        // printf("Consumed: %s\n", current_token_parse.name);
         parse_index++;
         return 1;
     }
 
-    printSyntaxError(expected, current_token_parse.type);
+    printSyntaxError(expected, current_token_parse.type, current_token_parse.line);
     panicRecovery();
     return 0;
 }
 
 void panicRecovery() {
-    printf("Entering panic recovery...\n");
+    // printf("Entering panic recovery...\n");
 
+    // Loop continues as long as we are NOT at a safe stopping point
     while (parse_index < count &&
            current_token_parse.type != SEMICOLON &&
-           current_token_parse.type != EOF_TOKEN)
+           current_token_parse.type != EOF_TOKEN &&
+           
+           // STOP SKIPPING if we see the end of a block
+           current_token_parse.type != RCBRACE &&
+
+           // STOP SKIPPING if we see the start of a new statement (Keywords)
+           current_token_parse.type != IF &&
+           current_token_parse.type != REPEAT &&
+           current_token_parse.type != DISPLAY &&
+           current_token_parse.type != STOP &&
+           current_token_parse.type != CONTINUE &&
+           current_token_parse.type != IDENT && // Assignments
+           
+           // STOP SKIPPING if we see a type declaration
+           current_token_parse.type != NUMBER &&
+           current_token_parse.type != DECIMAL &&
+           current_token_parse.type != TEXT &&
+           current_token_parse.type != BOOL &&
+           current_token_parse.type != SYMBOL &&
+           current_token_parse.type != LIST
+           )
     {
-        printf("Skipping token: %s\n", current_token_parse.name);
+        // printf("Skipping token: %s\n", current_token_parse.name);
         parse_index++;
     }
 
     if (current_token_parse.type == SEMICOLON) {
-        printf("Recovered at ;\n");
-
-        // because you are consuming semicolon here and then outside too
-        // parse_index++;
-    }
+        // printf("Recovered at ;\n");
+        parse_index++; 
+    } 
+    // else {
+    //     printf("Recovered at safe token: %s\n", current_token_parse.name);
+    // }
 }
 
 // --------- GRAMMAR ---------
@@ -277,7 +301,7 @@ void parseCompoundStatement() {
     // }
 
     // unexpected — fallback
-    printf("Syntax error: unexpected token %s\n", current_token_parse.name);
+    printf("Syntax error (Line %d): unexpected token %s\n", current_token_parse.line, current_token_parse.name);
     panicRecovery();
 }
 
@@ -296,7 +320,7 @@ void parseSimpleStatement() {
             parseJumpStmnt();
             break;
         default:
-            printf("Syntax error: unexpected token %s\n", current_token_parse.name);
+            printf("Syntax error (Line %d): unexpected token %s\n", current_token_parse.line, current_token_parse.name);
             panicRecovery();
             break;
     }
@@ -372,8 +396,8 @@ int parseDataType() {
             return 1;
 
         default:
-            printf("Syntax error: expected a data type, found %s\n",
-                   current_token_parse.name);
+            printf("Syntax error (Line %d): expected a data type, found %s\n",
+                   current_token_parse.line, current_token_parse.name);
             return 0;
     }
 }
