@@ -27,6 +27,7 @@ void parseOutputStmnt();
 void parseAssStmnt();
 void parseConditionalStmnt();
 void parseIterStmnt();
+void parseRepeatForStmnt();
 void parseDecItem();
 void parseDecListTail();
 void parseDecItemSuffix();
@@ -249,6 +250,7 @@ void parseStatement() {
     switch (current_token_parse.type) {
         case IF:
         case REPEAT:
+        case REPEATFOR:
         case LCBRACE:     
             parseCompoundStatement();
             break;
@@ -269,12 +271,16 @@ void parseCompoundStatement() {
         parseIterStmnt();         // handles repeat(...) { ... }
         return;
     }
-    // if (current_token_parse.type == LCBRACE) {
-    //     if (!match(LCBRACE)) return;
-    //     parseStatementList();
-    //     if (!match(RCBRACE)) return;
-    //     return;
-    // }
+    if (current_token_parse.type == REPEATFOR) {
+        parseRepeatForStmnt();    // handles repeatfor(...) { ... }
+        return;
+    }
+    if (current_token_parse.type == LCBRACE) {
+        if (!match(LCBRACE)) return;
+        parseStatementList();
+        if (!match(RCBRACE)) return;
+        return;
+    }
 
     // unexpected — fallback
     printf("Syntax error: unexpected token %s\n", current_token_parse.name);
@@ -287,7 +293,14 @@ void parseSimpleStatement() {
             parseDecStmnt();    // declaration (no semicolon here)
             break;
         case IDENT:
-            parseAssStmnt();    // assignment or expression start
+            {
+                int next_type = (parse_index + 1 < count) ? tokens[parse_index + 1].type : EOF_TOKEN;
+                if (next_type == ASSIGN_OP) {
+                    parseAssStmnt();    // assignment
+                } else {
+                    parseExpr();        // expression or call statement
+                }
+            }
             break;
         case DISPLAY:
             parseOutputStmnt();
@@ -305,7 +318,7 @@ void parseSimpleStatement() {
 // ---- Declaration Statement ---------
 
 void parseDecStmnt(){
-    parseDataType();
+    if (!parseDataType()) return;
     // parseIdList();
     parseDecList();
     // if (!match(IDENT)) return;
@@ -454,6 +467,16 @@ void parseIterStmnt(){
 
 }
 
+void parseRepeatForStmnt(){
+    if (!match(REPEATFOR)) return;
+    if (!match(LEFT_PAREN)) return;
+    parseExpr();
+    if (!match(RIGHT_PAREN)) return;
+    if (!match(LCBRACE)) return;
+    parseStatementList();
+    if (!match(RCBRACE)) return;
+}
+
 void parseJumpStmnt(){
     switch(current_token_parse.type){
         case CONTINUE:
@@ -533,14 +556,14 @@ void parsePower() {
 }
 
 void parseUnary() {
-
-        while(current_token_parse.type == ADDITION_OP ||
+        if (current_token_parse.type == ADDITION_OP ||
             current_token_parse.type == SUBTRACT_OP ||
             current_token_parse.type == PRE_INCREMENT_OP ||
             current_token_parse.type == PRE_DECREMENT_OP ||
             current_token_parse.type == NOT_OP){
                 match(current_token_parse.type);
                 parseUnary();
+                return;
             }
             parsePostfix();
 }
@@ -564,6 +587,7 @@ void parsePrimary(){
         case TRUE:
         case FALSE:
         case TEXT_LIT:
+        case NOTHING:
             match(current_token_parse.type);
             break;
 
