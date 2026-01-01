@@ -4,125 +4,83 @@ Function calls imply **stack push**, and returns imply **stack pop**.
 
 ---
 
-## Legend
+## Program and Statement Control
 
-* **State** – Conceptual PDA state / parser function
-* **Input Token** – `current_token_parse.type` (as consumed by `parser.c`)
-* **Action / Transition** – Parser behavior
-* **Stack** – Implicit call-stack effect
-
----
-
-## Program and Statement List
-
-| State          | Input Token            | Action / Transition     | Stack            |
-| -------------- | ---------------------- | ----------------------- | ---------------- |
-| PROGRAM        | any                    | `parseStatementList()`  | push             |
-| STATEMENT_LIST | `EOF_TOKEN`, `RCBRACE` | ε (return)              | pop              |
-| STATEMENT_LIST | otherwise              | `parseStatement()` loop | push `STATEMENT` |
-
----
-
-## Statement Dispatch
-
-| State     | Input Token | Action / Transition                       | Stack |
-| --------- | ----------- | ----------------------------------------- | ----- |
-| STATEMENT | `IF`        | `parseConditionalStmnt()`                 | push  |
-| STATEMENT | `REPEAT`    | `parseIterStmnt()`                        | push  |
-| STATEMENT | otherwise   | `parseSimpleStatement()` then `SEMICOLON` | push  |
+| State          | Input Token Group      | Transition / Action                     | Stack            |
+| -------------- | ---------------------- | --------------------------------------- | ---------------- |
+| PROGRAM        | any                    | enter `STATEMENT_LIST`                  | push             |
+| STATEMENT_LIST | `EOF_TOKEN`, `RCBRACE` | ε (return)                              | pop              |
+| STATEMENT_LIST | otherwise              | `STATEMENT`, then loop                  | push `STATEMENT` |
+| STATEMENT      | `IF`                   | go to `CONDITIONAL_STMT`                | push             |
+| STATEMENT      | `REPEAT`               | go to `ITER_STMT`                       | push             |
+| STATEMENT      | otherwise              | go to `SIMPLE_STMT`, expect `SEMICOLON` | push             |
 
 ---
 
 ## Simple Statements
 
-| State       | Input Token                                           | Action / Transition  | Stack |
-| ----------- | ----------------------------------------------------- | -------------------- | ----- |
-| SIMPLE_STMT | `NUMBER`, `DECIMAL`, `TEXT`, `BOOL`, `SYMBOL`, `LIST` | `parseDecStmnt()`    | push  |
-| SIMPLE_STMT | `IDENT`                                               | `parseAssStmnt()`    | push  |
-| SIMPLE_STMT | `DISPLAY`                                             | `parseOutputStmnt()` | push  |
-| SIMPLE_STMT | `STOP`, `CONTINUE`                                    | `parseJumpStmnt()`   | pop   |
+| State       | Input Token Group                                                 | Transition / Action | Stack |
+| ----------- | ----------------------------------------------------------------- | ------------------- | ----- |
+| SIMPLE_STMT | data type (`NUMBER`, `DECIMAL`, `TEXT`, `BOOL`, `SYMBOL`, `LIST`) | `DECL_STMT`         | push  |
+| SIMPLE_STMT | `IDENT`                                                           | `ASSIGN_STMT`       | push  |
+| SIMPLE_STMT | `DISPLAY`                                                         | `OUTPUT_STMT`       | push  |
+| SIMPLE_STMT | `STOP`, `CONTINUE`                                                | consume jump        | pop   |
 
 ---
 
-## Declarations
+## Control Structures
 
-| State           | Input Token           | Action / Transition                  | Stack |
-| --------------- | --------------------- | ------------------------------------ | ----- |
-| DEC_STMT        | datatype token        | `parseDataType()` → `parseDecList()` | push  |
-| DEC_LIST        | any                   | `DEC_ITEM ( COMMA DEC_ITEM )*`       | loop  |
-| DEC_ITEM        | `IDENT`               | consume `IDENT` → `DEC_ITEM_SUFFIX`  | push  |
-| DEC_ITEM_SUFFIX | `ASSIGN_OP`           | consume `=` then branch              | push  |
-| DEC_ITEM_SUFFIX | `ASSIGN_OP GET`       | `parseInputStmnt()`                  | push  |
-| DEC_ITEM_SUFFIX | `ASSIGN_OP` otherwise | `parseExpr()`                        | push  |
-| DEC_ITEM_SUFFIX | otherwise             | ε                                    | pop   |
+| State            | Input Token Group | Transition / Action                     | Stack |
+| ---------------- | ----------------- | --------------------------------------- | ----- |
+| CONDITIONAL_STMT | `IF`              | `IF ( EXPR ) { STATEMENT_LIST }`        | push  |
+| ELIF_LIST        | `ELIF`            | `ELIF ( EXPR ) { STATEMENT_LIST }` loop | loop  |
+| ELSE_OPT         | `ELSE`            | `{ STATEMENT_LIST }` optional           | push  |
+| ITER_STMT        | `REPEAT`          | `REPEAT ( EXPR ) { STATEMENT_LIST }`    | push  |
 
 ---
 
-## Assignment Statement
+## Declarations and Assignments
 
-| State       | Input Token | Action / Transition    | Stack   |      |
-| ----------- | ----------- | ---------------------- | ------- | ---- |
-| ASSIGN_STMT | `IDENT`     | `IDENT ASSIGN_OP ( GET | EXPR )` | push |
-
----
-
-## Input and Output
-
-| State       | Input Token | Action / Transition                   | Stack           |
-| ----------- | ----------- | ------------------------------------- | --------------- |
-| INPUT_STMT  | `GET`       | `GET LEFT_PAREN DataType RIGHT_PAREN` | push `DataType` |
-| OUTPUT_STMT | `DISPLAY`   | `DISPLAY LEFT_PAREN EXPR RIGHT_PAREN` | push `EXPR`     |
+| State            | Input Token Group | Transition / Action          | Stack   |
+| ---------------- | ----------------- | ---------------------------- | ------- |
+| DECL_STMT        | data type         | `DataType → DECL_LIST`       | push    |
+| DECL_LIST        | any               | `DECL_ITEM ( , DECL_ITEM )*` | loop    |
+| DECL_ITEM        | `IDENT`           | consume `IDENT` → suffix     | push    |
+| DECL_ITEM_SUFFIX | `=`               | `= GET ( DataType )`         | push    |
+| DECL_ITEM_SUFFIX | `=`               | `= EXPR`                     | push    |
+| DECL_ITEM_SUFFIX | otherwise         | ε                            | pop     |
+| ASSIGN_STMT      | `IDENT`           | `IDENT = ( GET               | EXPR )`/ push |
 
 ---
 
-## Conditional Statements
+## Expression PDA
 
-| State            | Input Token | Action / Transition                     | Stack |
-| ---------------- | ----------- | --------------------------------------- | ----- |
-| CONDITIONAL_STMT | `IF`        | `IF ( EXPR ) { STATEMENT_LIST }`        | push  |
-| ELIF_LIST        | `ELIF`      | `ELIF ( EXPR ) { STATEMENT_LIST }` loop | loop  |
-| ELSE_OPT         | `ELSE`      | `{ STATEMENT_LIST }` optional           | push  |
-| ELSE_OPT         | otherwise   | ε                                       | pop   |
-
----
-
-## Iterative Statement
-
-| State     | Input Token | Action / Transition                  | Stack |
-| --------- | ----------- | ------------------------------------ | ----- |
-| ITER_STMT | `REPEAT`    | `REPEAT ( EXPR ) { STATEMENT_LIST }` | push  |
-
----
-
-## Expressions (Operator-Precedence PDA)
-
-| State     | Input Token                                                  | Action / Transition            | Stack                 |                  |                     |                    |      |
-| --------- | ------------------------------------------------------------ | ------------------------------ | --------------------- | ---------------- | ------------------- | ------------------ | ---- |
-| EXPR      | expression start                                             | `parseBoolExpr()`              | push                  |                  |                     |                    |      |
-| BOOL_EXPR | expression start                                             | `REL_EXPR ( OR_OP REL_EXPR )*` | loop                  |                  |                     |                    |      |
-| REL_EXPR  | expression start                                             | `ADD_EXPR ( relop ADD_EXPR )?` | optional              |                  |                     |                    |      |
-| ADD_EXPR  | expression start                                             | `TERM ( ADDITION_OP            | SUBTRACT_OP TERM )*`  | loop             |                     |                    |      |
-| TERM      | expression start                                             | `POWER ( MULTIPLY_OP           | DIVIDE_OP             | FLOORDIV_OP      | MODULO_OP POWER )*` | loop               |      |
-| POWER     | expression start                                             | `UNARY ( EXPONENT_OP UNARY )*` | loop                  |                  |                     |                    |      |
-| UNARY     | prefix ops                                                   | `( +                           | -                     | PRE_INCREMENT_OP | PRE_DECREMENT_OP    | NOT_OP )* POSTFIX` | push |
-| POSTFIX   | primary                                                      | `PRIMARY ( POST_INCREMENT_OP   | POST_DECREMENT_OP )*` | loop             |                     |                    |      |
-| PRIMARY   | `NUM_LIT`, `DEC_LIT`, `SYM_LIT`, `TEXT_LIT`, `TRUE`, `FALSE` | consume literal                | pop                   |                  |                     |                    |      |
-| PRIMARY   | `IDENT`                                                      | consume `IDENT`                | pop                   |                  |                     |                    |      |
-| PRIMARY   | `LEFT_PAREN`                                                 | `( EXPR )`                     | push                  |                  |                     |                    |      |
+| State     | Input Token Group                                                      | Transition / Action            | Stack                |
+| --------- | ---------------------------------------------------------------------- | ------------------------------ | -------------------- |
+| EXPR      | expression start                                                       | `BOOL_EXPR`                    | push                 |
+| BOOL_EXPR | expression start                                                       | `REL_EXPR ( OR REL_EXPR )*`    | loop                 |
+| REL_EXPR  | expression start                                                       | `ADD_EXPR ( relop ADD_EXPR )?` | optional             |
+| ADD_EXPR  | any expr start                                                         | `Term ( +/− Term )*`           | push `Term`; loop    |
+| TERM      | any expr start                                                         | `Power ( / // % Power )`       | push `Power`; loop   |
+| POWER     | any expr start                                                         | `Unary ( ** Unary )*`          | push `Unary`; loop   |
+| UNARY     | prefix op (+ − ++ -- NOT)*                                             | consume ops then `Postfix`     | push `Postfix`       |
+| POSTFIX   | primary                                                                | `Primary then (post++/post--)` | push `Primary`; loop |
+| PRIMARY   | literal (`NUM_LIT`, `DEC_LIT`, `TEXT_LIT`, `SYM_LIT`, `TRUE`, `FALSE`) | consume literal                | pop                  |
+| PRIMARY   | `IDENT`                                                                | consume `IDENT`                | pop                  |
+| PRIMARY   | `(`                                                                    | `( EXPR )`                     | push                 |
 
 ---
 
-## Error Recovery (Global)
+## Error Handling
 
-| State | Input Token | Action / Transition                                                | Stack          |
-| ----- | ----------- | ------------------------------------------------------------------ | -------------- |
-| ANY   | unexpected  | `panicRecovery()` → skip until `SEMICOLON`, `RCBRACE`, `EOF_TOKEN` | pop until sync |
+| State | Input Token Group | Transition / Action                               | Stack          |
+| ----- | ----------------- | ------------------------------------------------- | -------------- |
+| ANY   | invalid           | skip until `SEMICOLON`, `RCBRACE`, or `EOF_TOKEN` | pop until sync |
 
 ---
 
 ## Notes
 
-* All tokens and transitions now **directly match `parser.c` behavior**, the parser implementation.
-* Stack behavior reflects **actual recursive calls**, not grammar symbols.
-* `SEMICOLON` handling is external to simple statements, matching `parseStatement()`.
-* Expression precedence exactly mirrors function nesting in `parser.c`.
+* Token groups are clustered **by diagram responsibility**, not by header definitions.
+* The PDA reflects **actual control flow in `parser.c`**, with abstraction only where behavior is identical.
+* Operator precedence is preserved by state ordering, not by grammar rules.
