@@ -8,12 +8,6 @@
 #include "../include/token_stream.h"
 #include "../include/token_list.h"
 
-// void parseLexC();
-// void parseProgramItem();
-// void parseProgramTail();
-// void parseFunctionDef();
-// void parseOptParamDefs();
-
 void parseProgram();
 void parseStatementList();
 void parseStatement();
@@ -54,6 +48,8 @@ void parsePrimary();
 
 // match returns 1 (success) or 0 (failed)
 int match(int expected);
+
+int error_flag = 0;
 
 // Parse index
 size_t parse_index = 0;
@@ -195,6 +191,7 @@ int match(int expected) {
 
 void panicRecovery() {
     // printf("Entering panic recovery...\n");
+    error_flag = 1;
 
     // Loop continues as long as we are NOT at a safe stopping point
     while (parse_index < count &&
@@ -293,12 +290,6 @@ void parseCompoundStatement() {
         parseIterStmnt();         // handles repeat(...) { ... }
         return;
     }
-    // if (current_token_parse.type == LCBRACE) {
-    //     if (!match(LCBRACE)) return;
-    //     parseStatementList();
-    //     if (!match(RCBRACE)) return;
-    //     return;
-    // }
 
     // unexpected — fallback
     printf("Syntax error (Line %d): unexpected token %s\n", current_token_parse.line, current_token_parse.name);

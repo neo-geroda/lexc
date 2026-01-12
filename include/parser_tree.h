@@ -1,5 +1,5 @@
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef PARSERTREE_H
+#define PARSERTREE_H
 
 #include <stdio.h>
 #include "tokens.h"          // for token types
@@ -7,10 +7,6 @@
 #include "token_stream.h"    // if needed for the stream
 #include "symbol_table.h"    // if parser interacts with symbol table
 
-extern Token current_token_parse;
-extern int error_flag;
+void tree_parse();
 
-// Expose the main tree_parse() function
-void parse();
-
-#endif // PARSER_H
+#endif // PARSERTREE_H
