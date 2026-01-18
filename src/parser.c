@@ -337,16 +337,16 @@ void panicRecovery() {
         if (brace_depth == 0) {
             // Semicolon ends a statement - STOP HERE, don't consume
             if (current_token_parse.type == SEMICOLON) {
-                return; // ← CHANGED: Don't consume the semicolon
+                return; // Don't consume the semicolon
             }
             
-            // Statement-starting keywords
+            // Statement-starting keywords only
+            // NOTE: ELIF and ELSE are not statement starts - they must follow IF blocks
             if (current_token_parse.type == IF ||
                 current_token_parse.type == REPEAT ||
                 current_token_parse.type == DISPLAY ||
                 current_token_parse.type == STOP ||
-                current_token_parse.type == CONTINUE ||
-                current_token_parse.type == IDENT) {
+                current_token_parse.type == CONTINUE) {
                 return;
             }
             
@@ -615,9 +615,23 @@ ASTNode* parseConditionalStmnt(){
     if (!match(LEFT_PAREN)) return ifNode;
     
     ASTNode* condition = parseExpr();
-    addChild(ifNode, condition);
+    if (condition) {
+        addChild(ifNode, condition);
+    }
     
-    if (!match(RIGHT_PAREN)) return ifNode;
+    // If RIGHT_PAREN fails, skip to LCBRACE to continue parsing the block
+    if (!match(RIGHT_PAREN)) {
+        // Try to recover by finding the opening brace
+        while (parse_index < count && 
+               current_token_parse.type != EOF_TOKEN &&
+               current_token_parse.type != LCBRACE &&
+               current_token_parse.type != ELIF &&
+               current_token_parse.type != ELSE &&
+               current_token_parse.type != SEMICOLON) {
+            parse_index++;
+        }
+    }
+    
     if (!match(LCBRACE)) return ifNode;
     
     ASTNode* thenBlock = parseStatementList();
@@ -625,6 +639,7 @@ ASTNode* parseConditionalStmnt(){
     
     if (!match(RCBRACE)) return ifNode;
 
+    // Continue to parse elif and else clauses even if there were errors above
     parseElifList(ifNode);
     parseElseOpt(ifNode);
     
@@ -678,8 +693,28 @@ ASTNode* parseIterStmnt(){
     if (!match(REPEAT)) return repeatNode;
     if (!match(LEFT_PAREN)) return repeatNode;
     
+    // Check for empty parentheses - repeat requires a count/condition
+    if (current_token_parse.type == RIGHT_PAREN) {
+        // Expected a number, boolean, or identifier for the loop condition
+        printf("Syntax error (Line %d): expected token 133: NUMBER_LITERAL but found %d: %s\n",
+               current_token_parse.line,
+               current_token_parse.type,
+               current_token_parse.name);
+        match(RIGHT_PAREN); // consume it to continue parsing
+        
+        if (current_token_parse.type == LCBRACE) {
+            match(LCBRACE);
+            ASTNode* body = parseStatementList();
+            addChild(repeatNode, body);
+            match(RCBRACE);
+        }
+        return repeatNode;
+    }
+    
     ASTNode* count = parseExpr();
-    addChild(repeatNode, count);
+    if (count) {
+        addChild(repeatNode, count);
+    }
     
     if (!match(RIGHT_PAREN)) return repeatNode;
     if (!match(LCBRACE)) return repeatNode;
@@ -872,7 +907,9 @@ ASTNode* parsePrimary(){
         }
 
         default:
-            printf("Syntax error: expected literal, found %s\n",
+            printf("Syntax error (Line %d): expected expression or literal, but found %d: %s\n",
+                   current_token_parse.line,
+                   current_token_parse.type,
                    current_token_parse.name);
             panicRecovery();
             return NULL;
