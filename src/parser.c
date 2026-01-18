@@ -310,44 +310,65 @@ int match(int expected) {
 }
 
 void panicRecovery() {
-    // printf("Entering panic recovery...\n");
-
-    // Loop continues as long as we are NOT at a safe stopping point
-    while (parse_index < count &&
-           current_token_parse.type != SEMICOLON &&
-           current_token_parse.type != EOF_TOKEN &&
-           
-           // STOP SKIPPING if we see the end of a block
-           current_token_parse.type != RCBRACE &&
-
-           // STOP SKIPPING if we see the start of a new statement (Keywords)
-           current_token_parse.type != IF &&
-           current_token_parse.type != REPEAT &&
-           current_token_parse.type != DISPLAY &&
-           current_token_parse.type != STOP &&
-           current_token_parse.type != CONTINUE &&
-           current_token_parse.type != IDENT && // Assignments
-           
-           // STOP SKIPPING if we see a type declaration
-           current_token_parse.type != NUMBER &&
-           current_token_parse.type != DECIMAL &&
-           current_token_parse.type != TEXT &&
-           current_token_parse.type != BOOL &&
-           current_token_parse.type != SYMBOL &&
-           current_token_parse.type != LIST
-           )
-    {
-        // printf("Skipping token: %s\n", current_token_parse.name);
+    // Track brace depth during recovery
+    int brace_depth = 0;
+    
+    while (parse_index < count && current_token_parse.type != EOF_TOKEN) {
+        
+        // Track braces as we skip
+        if (current_token_parse.type == LCBRACE) {
+            brace_depth++;
+            parse_index++;
+            continue;
+        }
+        
+        if (current_token_parse.type == RCBRACE) {
+            if (brace_depth > 0) {
+                // We're exiting a block we entered during recovery
+                brace_depth--;
+                parse_index++;
+                continue;
+            } else {
+                // We've hit a closing brace at our original level
+                // Don't consume it - let the normal parser handle it
+                return;
+            }
+        }
+        
+        // Only treat these as synchronization points if we're at base level
+        if (brace_depth == 0) {
+            // Semicolon ends a statement
+            if (current_token_parse.type == SEMICOLON) {
+                parse_index++; // Consume the semicolon
+                return;
+            }
+            
+            // Statement-starting keywords (NOT elif/else - they're not valid alone)
+            if (current_token_parse.type == IF ||
+                current_token_parse.type == REPEAT ||
+                current_token_parse.type == DISPLAY ||
+                current_token_parse.type == STOP ||
+                current_token_parse.type == CONTINUE ||
+                current_token_parse.type == IDENT) {
+                // Found a statement starter - stop here without consuming
+                return;
+            }
+            
+            // Type keywords (declaration statements)
+            if (current_token_parse.type == NUMBER ||
+                current_token_parse.type == DECIMAL ||
+                current_token_parse.type == TEXT ||
+                current_token_parse.type == BOOL ||
+                current_token_parse.type == SYMBOL ||
+                current_token_parse.type == LIST) {
+                // Found a declaration - stop here without consuming
+                return;
+            }
+        }
+        
+        // Not at a safe stopping point yet, keep skipping
         parse_index++;
     }
-
-    if (current_token_parse.type == SEMICOLON) {
-        // printf("Recovered at ;\n");
-        parse_index++; 
-    } 
-    // else {
-    //     printf("Recovered at safe token: %s\n", current_token_parse.name);
-    // }
 }
 
 // --------- GRAMMAR ---------

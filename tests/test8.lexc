@@ -1,18 +1,18 @@
-
 ~ ASSIGNMENT
 1. Variable to variable (a = b)
 2. Constant to variable (a = 10)
 3. Expression result to variable (a = b + 10) or (a = x * y - 5)
 ~
 
-x = 10;
+x = 10 x;
+x = y;
 rate = 3.14;
 msg = "hello";
 flag = true;
 number my_age = (4*5) + 1;
 
 ~~INPUT Statement
-x = get(number);
+x = get(number)
 
 ~ DISPLAY
 1. print variable value (ex. printf d)
@@ -21,7 +21,7 @@ x = get(number);
 ~
 display(x);
 display("Hello World!");
-display("Hello" + "World!");
+display("Hello"  "World!");
 display("Hello" + msg);
 
 ~ CONDITIONALS
@@ -29,7 +29,7 @@ display("Hello" + msg);
 2. else
 3. if-else-if
 ~
-if (x > 5) {
+if (x  5) {
     display("x is greater than 5");
 }
 elif (x == 5) {
@@ -58,7 +58,7 @@ repeat(True) then {
     display("Hello madlang peeople!");
 } end
 
-repeat(3) {
+repeat() {
     x = x + 1;
     display(x);
 
@@ -68,7 +68,7 @@ repeat(3) {
 }
 
 ~~ DECLARATION
-number x;
+number x
 decimal rate;
 text msg;
 bool flag;
