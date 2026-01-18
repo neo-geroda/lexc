@@ -324,33 +324,29 @@ void panicRecovery() {
         
         if (current_token_parse.type == RCBRACE) {
             if (brace_depth > 0) {
-                // We're exiting a block we entered during recovery
                 brace_depth--;
                 parse_index++;
                 continue;
             } else {
-                // We've hit a closing brace at our original level
-                // Don't consume it - let the normal parser handle it
+                // Don't consume the closing brace
                 return;
             }
         }
         
         // Only treat these as synchronization points if we're at base level
         if (brace_depth == 0) {
-            // Semicolon ends a statement
+            // Semicolon ends a statement - STOP HERE, don't consume
             if (current_token_parse.type == SEMICOLON) {
-                parse_index++; // Consume the semicolon
-                return;
+                return; // ← CHANGED: Don't consume the semicolon
             }
             
-            // Statement-starting keywords (NOT elif/else - they're not valid alone)
+            // Statement-starting keywords
             if (current_token_parse.type == IF ||
                 current_token_parse.type == REPEAT ||
                 current_token_parse.type == DISPLAY ||
                 current_token_parse.type == STOP ||
                 current_token_parse.type == CONTINUE ||
                 current_token_parse.type == IDENT) {
-                // Found a statement starter - stop here without consuming
                 return;
             }
             
@@ -361,7 +357,6 @@ void panicRecovery() {
                 current_token_parse.type == BOOL ||
                 current_token_parse.type == SYMBOL ||
                 current_token_parse.type == LIST) {
-                // Found a declaration - stop here without consuming
                 return;
             }
         }
