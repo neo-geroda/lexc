@@ -10,8 +10,7 @@
 #include "../include/token_list.h"
 #include "../include/parser.h"
 
-// --------- AST Node Implementation ---------
-
+// Node definition
 ASTNode* createNode(NodeType type, const char* value, int token_type) {
     ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
     node->type = type;
@@ -23,6 +22,7 @@ ASTNode* createNode(NodeType type, const char* value, int token_type) {
     return node;
 }
 
+// Function to attach node to a parent node
 void addChild(ASTNode* parent, ASTNode* child) {
     if (!parent || !child) return;
     
@@ -34,6 +34,7 @@ void addChild(ASTNode* parent, ASTNode* child) {
     parent->children[parent->child_count++] = child;
 }
 
+// Memory cleanup
 void freeAST(ASTNode* node) {
     if (!node) return;
     
@@ -46,6 +47,7 @@ void freeAST(ASTNode* node) {
     free(node);
 }
 
+// Convert node to a string for printing
 const char* nodeTypeToString(NodeType type) {
     switch(type) {
         // Program Structure
@@ -99,6 +101,7 @@ const char* nodeTypeToString(NodeType type) {
     }
 }
 
+// Print the AST
 void printAST(ASTNode* node, int indent) {
     if (!node) return;
     
@@ -123,12 +126,6 @@ void printAST(ASTNode* node, int indent) {
     }
 }
 
-// void parseLexC();
-// void parseProgramItem();
-// void parseProgramTail();
-// void parseFunctionDef();
-// void parseOptParamDefs();
-
 ASTNode* parseProgram();
 ASTNode* parseStatementList();
 ASTNode* parseStatement();
@@ -146,17 +143,14 @@ ASTNode* parseDecItem(ASTNode* parent);
 void parseDecListTail(ASTNode* parent);
 void parseDecItemSuffix(ASTNode* parent);
 ASTNode* parseCompoundStatement();
-
 ASTNode* parseSimpleStatement();
-
-// void parseRepeat();
 void parseJumpStmnt(ASTNode* parent);
-void parseDecSuffix();
 ASTNode* parseExpr();
 void parseElifList(ASTNode* parent);
 void parseElseOpt(ASTNode* parent);
 void panicRecovery();
-// ---- Expression Forward Declarations ----
+
+// Expression Forward Declarations
 ASTNode* parseBoolExpr();
 ASTNode* parseRelExpr();
 ASTNode* parseAddExpr();
@@ -177,7 +171,7 @@ size_t parse_index = 0;
 
 #define current_token_parse tokens[parse_index]
 
-// --------- PARSE ENTRY POINT ---------
+// PARSE ENTRY POINT 
 
 ASTNode* parse() {
     parse_index = 0;
@@ -186,10 +180,9 @@ ASTNode* parse() {
     return root;
 }
 
-// --------- MATCH & RECOVERY ---------
+// MATCH & RECOVERY 
 
 // Reliable token name mapping using switch statement
-// This doesn't depend on token_list initialization
 const char* tokenTypeToString(int t) {
     switch(t) {
         // Basic tokens
@@ -311,6 +304,17 @@ int match(int expected) {
     return 0;
 }
 
+// Returns 1 on success, 0 on failure, but doesn't call panicRecovery()
+int try_match(int expected) {
+    if (current_token_parse.type == expected) {
+        parse_index++;
+        return 1;
+    }
+    
+    printSyntaxError(expected, current_token_parse.type, current_token_parse.line);
+    return 0;
+}
+
 void panicRecovery() {
     // Track brace depth during recovery
     int brace_depth = 0;
@@ -330,12 +334,10 @@ void panicRecovery() {
                 parse_index++;
                 continue;
             } else {
-                // Don't consume the closing brace
                 return;
             }
         }
         
-        // Only treat these as synchronization points if we're at base level
         if (brace_depth == 0) {
             // Semicolon ends a statement - STOP HERE, don't consume
             if (current_token_parse.type == SEMICOLON) {
@@ -343,7 +345,6 @@ void panicRecovery() {
             }
             
             // Statement-starting keywords only
-            // NOTE: ELIF and ELSE are not statement starts - they must follow IF blocks
             if (current_token_parse.type == IF ||
                 current_token_parse.type == REPEAT ||
                 current_token_parse.type == DISPLAY ||
@@ -368,7 +369,7 @@ void panicRecovery() {
     }
 }
 
-// --------- GRAMMAR ---------
+// GRAMMAR 
 ASTNode* parseProgram() {
     ASTNode* program = createNode(NODE_LEXC_PROGRAM, NULL, 0);
     ASTNode* stmtList = parseStatementList();
@@ -396,8 +397,7 @@ ASTNode* parseStatementList() {
     return stmtList;
 }
 
-// -------- All about identifiers ------
-
+// All about identifiers 
 void parseIdList(){
     if (!match(IDENT)) return;
     parseIdListTail();
@@ -411,7 +411,7 @@ void parseIdListTail(){
     }
 }
 
-// ------- Statements enrty point --------
+//  Statements enrty point 
 
 ASTNode* parseStatement() {
     switch (current_token_parse.type) {
@@ -435,12 +435,6 @@ ASTNode* parseCompoundStatement() {
     if (current_token_parse.type == REPEAT) {
         return parseIterStmnt();         // handles repeat(...) { ... }
     }
-    // if (current_token_parse.type == LCBRACE) {
-    //     if (!match(LCBRACE)) return NULL;
-    //     parseStatementList();
-    //     if (!match(RCBRACE)) return NULL;
-    //     return NULL;
-    // }
 
     // unexpected — fallback
     printf("Syntax error (Line %d): unexpected token %s\n", current_token_parse.line, current_token_parse.name);
@@ -468,7 +462,7 @@ ASTNode* parseSimpleStatement() {
     }
 }
 
-// ---- Declaration Statement ---------
+// Declaration Statement 
 
 ASTNode* parseDecStmnt(){
     int dataType = parseDataType();
@@ -526,7 +520,7 @@ void parseDecItemSuffix(ASTNode* parent){
 }
 
 
-// --------- INPUT STATEMENT ---------
+// INPUT STATEMENT 
 
 ASTNode* parseInputStmnt() {
     ASTNode* inputNode = createNode(NODE_INPUT_STMNT, "GET", GET);
@@ -543,7 +537,7 @@ ASTNode* parseInputStmnt() {
     return inputNode;
 }
 
-// --------- DATATYPE ---------
+// DATATYPE
 
 int parseDataType() {
     switch (current_token_parse.type) {
@@ -565,7 +559,7 @@ int parseDataType() {
     }
 }
 
-// ----- OUTPUT ------
+//  OUTPUT 
 
 ASTNode* parseOutputStmnt() {
     ASTNode* outputNode = createNode(NODE_OUTPUT_STMNT, "DISPLAY", DISPLAY);
@@ -581,7 +575,7 @@ ASTNode* parseOutputStmnt() {
     return outputNode;
 }
 
-// -----  ASSIGNMENT -------
+// ASSIGNMENT
 
 ASTNode* parseAssStmnt() {
     if (current_token_parse.type != IDENT) {
@@ -608,40 +602,96 @@ ASTNode* parseAssStmnt() {
     return assignNode;
 }
 
-// ----------- CONDITIONAL ------------
+// CONDITIONAL
 
 ASTNode* parseConditionalStmnt(){
     ASTNode* ifNode = createNode(NODE_CONDITIONAL_STMNT, "if", IF);
 
-    if (!match(IF)) return ifNode;
-    if (!match(LEFT_PAREN)) return ifNode;
+    // Consume IF token
+    if (current_token_parse.type != IF) {
+        printSyntaxError(IF, current_token_parse.type, current_token_parse.line);
+        return ifNode;
+    }
+    parse_index++;
     
+    // Consume LEFT_PAREN
+    if (current_token_parse.type != LEFT_PAREN) {
+        printSyntaxError(LEFT_PAREN, current_token_parse.type, current_token_parse.line);
+        panicRecovery();
+        return ifNode;
+    }
+    parse_index++;
+    
+    // Check for empty condition
+    if (current_token_parse.type == RIGHT_PAREN) {
+        printf("Syntax error (Line %d): empty condition in if statement\n",
+               current_token_parse.line);
+        parse_index++; // consume )
+        
+        // Try to parse body if present
+        if (current_token_parse.type == LCBRACE) {
+            parse_index++;
+            ASTNode* thenBlock = parseStatementList();
+            addChild(ifNode, thenBlock);
+            
+            if (current_token_parse.type == RCBRACE) {
+                parse_index++;
+            }
+            
+            parseElifList(ifNode);
+            parseElseOpt(ifNode);
+        }
+        
+        return ifNode;
+    }
+    
+    // Parse condition
     ASTNode* condition = parseExpr();
+    
     if (condition) {
         addChild(ifNode, condition);
     }
     
-    // If RIGHT_PAREN fails, skip to LCBRACE to continue parsing the block
-    if (!match(RIGHT_PAREN)) {
-        // Try to recover by finding the opening brace
+    // Check for RIGHT_PAREN without triggering panic recovery
+    if (current_token_parse.type != RIGHT_PAREN) {
+        printSyntaxError(RIGHT_PAREN, current_token_parse.type, current_token_parse.line);
+        
+        // Manual recovery: skip to { without going past elif/else/next statement
         while (parse_index < count && 
                current_token_parse.type != EOF_TOKEN &&
                current_token_parse.type != LCBRACE &&
+               current_token_parse.type != SEMICOLON &&
+               current_token_parse.type != IF &&
                current_token_parse.type != ELIF &&
-               current_token_parse.type != ELSE &&
-               current_token_parse.type != SEMICOLON) {
+               current_token_parse.type != ELSE) {
             parse_index++;
         }
+        
+        // If we didn't find LCBRACE, bail
+        if (current_token_parse.type != LCBRACE) {
+            return ifNode;
+        }
+    } else {
+        parse_index++; // consume )
     }
     
-    if (!match(LCBRACE)) return ifNode;
+    // Parse then-block
+    if (current_token_parse.type != LCBRACE) {
+        printSyntaxError(LCBRACE, current_token_parse.type, current_token_parse.line);
+        return ifNode;
+    }
+    parse_index++;
     
     ASTNode* thenBlock = parseStatementList();
     addChild(ifNode, thenBlock);
     
-    if (!match(RCBRACE)) return ifNode;
+    if (current_token_parse.type == RCBRACE) {
+        parse_index++;
+    } else {
+        printSyntaxError(RCBRACE, current_token_parse.type, current_token_parse.line);
+    }
 
-    // Continue to parse elif and else clauses even if there were errors above
+    // Parse elif and else - these should work even if above had errors
     parseElifList(ifNode);
     parseElseOpt(ifNode);
     
@@ -747,13 +797,13 @@ ASTNode* parseExpr () {
 }
 
 ASTNode* parseBoolExpr () {
-    ASTNode* left = parseRelExpr (); // Should be AND_TERM but skipping for now
+    ASTNode* left = parseRelExpr (); 
 
     while (current_token_parse.type == OR_OP)
     {
         int op = current_token_parse.type;
         match(OR_OP);
-        ASTNode* right = parseRelExpr(); // Should be AND_TERM
+        ASTNode* right = parseRelExpr(); 
         
         ASTNode* binOp = createNode(NODE_LOGICAL_OP, "or", op);
         addChild(binOp, left);
