@@ -6,7 +6,6 @@ Line	Type	Name	Lexeme
 7	11	IDENT	x
 7	140	;	;
 8	11	IDENT	x
-8	20	=	=
 8	11	IDENT	y
 8	140	;	;
 9	11	IDENT	rate
@@ -28,7 +27,6 @@ Line	Type	Name	Lexeme
 12	133	num_lit	4
 12	33	*	*
 12	133	num_lit	5
-12	24	)	)
 12	31	+	+
 12	133	num_lit	1
 12	140	;	;
@@ -121,7 +119,6 @@ Line	Type	Name	Lexeme
 46	145	}	}
 48	100	if	if
 48	23	(	(
-48	11	IDENT	True
 48	24	)	)
 48	144	{	{
 49	107	display	display
