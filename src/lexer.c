@@ -377,7 +377,7 @@ char lexer_outpath[260] = "lexer_tokens.txt";
                     nextToken = NUM_LIT;
                 }
                 break;
-            case UNKNOWN:
+            case UNKNOWN: {
                 char start_char = nextChar;
                 
                 if (isDelimiter(start_char)) {
@@ -442,6 +442,7 @@ char lexer_outpath[260] = "lexer_tokens.txt";
                     nextToken = lookupOperators(start_char);
                 }
                 break;
+            }
         }
 
         lastTokenReturned = nextToken;

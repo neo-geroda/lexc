@@ -27,13 +27,16 @@ int main(int argc, char **argv) {
 
     // Run the parser on the tokens array
     // printf("\n--- Parsing ---\n");
-    
-    parse();
-    // printf("The errorflag: %d", error_flag);
+    ASTNode* ast = parse();
 
-    if (error_flag == 0){
-        tree_parse();
-    } 
+    // Print the syntax tree
+    printf("\n--- Syntax Tree ---\n");
+    if (ast) {
+        printAST(ast, 0);
+        freeAST(ast);
+    } else {
+        printf("Failed to generate syntax tree.\n");
+    }
 
     return 0;
 }
