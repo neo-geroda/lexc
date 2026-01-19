@@ -75,6 +75,7 @@ void freeAST(ASTNode* node);
 void printAST(ASTNode* node, int indent);
 
 extern Token current_token_parse;
+extern int error_flag;
 
 // Expose the main parse() function - now returns AST
 ASTNode* parse();

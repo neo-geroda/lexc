@@ -170,6 +170,8 @@ ASTNode* parsePrimary();
 // match returns 1 (success) or 0 (failed)
 int match(int expected);
 
+int error_flag = 0;
+
 // Parse index
 size_t parse_index = 0;
 
