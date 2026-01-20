@@ -364,7 +364,6 @@ void panicRecovery() {
             }
         }
         
-        // Not at a safe stopping point yet, keep skipping
         parse_index++;
     }
 }

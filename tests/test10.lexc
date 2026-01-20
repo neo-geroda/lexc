@@ -4,15 +4,15 @@
 3. Expression result to variable (a = b + 10) or (a = x * y - 5)
 ~
 
-x = 10;
+x = ;
 x = y;
 rate = 3.14;
-msg = ;
+msg = "hello";
 flag = true;
 number my_age = 4 * 5 + 1;
 
 ~~INPUT Statement
-x = get(); 
+x = get();
 
 ~ DISPLAY
 1. print variable value (ex. printf d)
@@ -20,9 +20,9 @@ x = get();
 3. print string + variable value (ex. printf "Hello, world", d)
 ~
 
-display(x);
+display();
 display("Hello World!");
-display("Hello"  msg);
+display("Hello" + msg);
 
 ~ CONDITIONALS
 1. if
@@ -35,15 +35,11 @@ if (x > 5) {
 elif (x == 5) {
     display("x is equal to 5");
 }
-
-if (10 < 11){
-    display("Mini miss u!");
-}
 else {
     display("x is less than 5");
     
     if(1 > 0){
-        number kim = get(decimal)
+        number kim = get(decimal);
     }
     else{
         display("This is else!");
@@ -67,7 +63,7 @@ repeat(3) {
     x = x + 1;
     display(x);
 
-    repeat(x  1){
+    repeat(x < 1){
         display("Yes" + "FM!");
     }
 }
@@ -77,4 +73,4 @@ number x;
 decimal rate;
 text msg;
 bool flag;
-number y == 7;
+number y = 7;
